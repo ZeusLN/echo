@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import Page from '../components/Page';
 import useLNC from '../hooks/useLNC';
+import { hexToBase64 } from '../utils/Base64Utils';
+
 import BigNumber from 'bignumber.js';
 import Parser from 'rss-parser';
 import ReactAudioPlayer from 'react-audio-player';
@@ -37,61 +39,6 @@ const parse = async (rss: string) => {
 
     return { episodes, recipients };
 };
-
-// BASE64 Utils
-
-const chars =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-
-const btoa = (input = '') => {
-    const str = input;
-    let output = '';
-
-    for (
-        let block = 0, charCode, i = 0, map = chars;
-        str.charAt(i | 0) || ((map = '='), i % 1);
-        output += map.charAt(63 & (block >> (8 - (i % 1) * 8)))
-    ) {
-        charCode = str.charCodeAt((i += 3 / 4));
-
-        if (charCode > 0xff) {
-            throw new Error(
-                "'btoa' failed: The string to be encoded contains characters outside of the Latin1 range."
-            );
-        }
-
-        block = (block << 8) | charCode;
-    }
-
-    return output;
-};
-
-const hexStringToByte = (str: string) => {
-    if (!str) {
-        return new Uint8Array();
-    }
-
-    const a = [];
-    for (let i = 0, len = str.length; i < len; i += 2) {
-        a.push(parseInt(str.substr(i, 2), 16));
-    }
-
-    return new Uint8Array(a);
-};
-
-const byteToBase64 = (buffer: Uint8Array) => {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
-};
-
-const hexToBase64 = (str: string) => byteToBase64(hexStringToByte(str));
-
-//
 
 const Home: React.FC = () => {
     const { lnc } = useLNC();
@@ -195,15 +142,6 @@ const Home: React.FC = () => {
         return;
     };
 
-    // const testSend = async () => {
-    //     console.log('testSend');
-    //     await keysend(
-    //         // AMBOSS
-    //         '03006fcf3312dae8d068ea297f58e2bd00ec1ffe214b793eda46966b6294a53ce6',
-    //         10
-    //     );
-    // };
-
     useEffect(() => {
         if (lnc.isConnected) {
             const sendRequest = async () => {
@@ -269,8 +207,7 @@ const Home: React.FC = () => {
                                 return;
                             }}
                             // trigger onListen every minute
-                            // listenInterval={60000}
-                            listenInterval={15000}
+                            listenInterval={60000}
                         />
                     )}
                     {activePodcast &&
