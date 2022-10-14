@@ -2,73 +2,41 @@ import React, { useEffect, useState } from 'react';
 import Page from '../components/Page';
 import useLNC from '../hooks/useLNC';
 import { hexToBase64 } from '../utils/Base64Utils';
+import {
+    searchPodcasts,
+    podcastByFeedId,
+    episodesByFeedId
+} from '../utils/RequestUtils';
 
 import BigNumber from 'bignumber.js';
-import Parser from 'rss-parser';
 import ReactAudioPlayer from 'react-audio-player';
 import { sha256 } from 'js-sha256';
 
 const randomBytes = require('randombytes');
 
-const parser = new Parser({
-    customFields: {
-        feed: ['podcast:value']
-    }
-});
+const SUBSCRIPTION_KEY = 'apollo-subscriptions';
 
-const parse = async (rss: string) => {
-    const episodes: any = [];
-    const recipients: any = [];
-    // TODO configure CORS proxy to only be used in dev
-    const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
-    let feed = await parser.parseURL(CORS_PROXY + rss);
-
-    feed['podcast:value']['podcast:valueRecipient'].forEach((item: any) => {
-        const entry = item['$'];
-        recipients.push(entry);
-    });
-
-    feed.items.forEach((item) => {
-        episodes.push({
-            title: item.title,
-            mp3: (item.enclosure && item.enclosure.url) || null,
-            link: item.link,
-            recipients
-        });
-    });
-
-    return { episodes, recipients };
-};
+// pull from local localStorage
+// TODO make util
+let subscriptions = JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY) || '');
 
 const Home: React.FC = () => {
     const { lnc } = useLNC();
     const [info, setInfo] = useState<any>();
+    const [search, setSearch] = useState<any>('Citadel Dispatch');
+    const [searchResults, setSearchResults] = useState<any>([]);
 
-    const [noAgenda, setNA]: [any, any] = useState({});
-    const [moeFactz, setMF]: [any, any] = useState({});
     //
     const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(5);
     const [activePodcast, setActivePodcast]: [any, any] = useState(null);
+    const [activePodcastFunding, setActivePodcastFunding]: [any, any] =
+        useState(null);
     // keep track of sent, and to send - can't keysend millisats
     const [sent, setSent]: [any, any] = useState({});
     const [carry, setCarry]: [any, any] = useState({});
 
-    // fetch episodes here
-    (async () => {
-        if (!noAgenda.episodes) {
-            const noAgenda: any = await parse(
-                'http://feed.nashownotes.com/rss.xml'
-            );
-            setNA(noAgenda);
-        }
-
-        if (!moeFactz.episodes) {
-            const moeFactz: any = await parse(
-                'https://feed.nashownotes.com/mfrss.xml'
-            );
-            setMF(moeFactz);
-        }
-    })();
+    const [selectedShow, setSelectedShow]: [any, any] = useState('');
+    const [episodes, setEpisodes]: [any, any] = useState([]);
 
     const keysend = async (destination: string, amount: number) => {
         const preimage = randomBytes(32);
@@ -142,6 +110,13 @@ const Home: React.FC = () => {
         return;
     };
 
+    const handleSearchChange = (event: any) => setSearch(event.target.value);
+
+    const handlePodcastSearch = (event: any) => {
+        event.preventDefault();
+        searchPodcasts(search).then((data: any) => setSearchResults(data));
+    };
+
     useEffect(() => {
         if (lnc.isConnected) {
             const sendRequest = async () => {
@@ -151,6 +126,16 @@ const Home: React.FC = () => {
             sendRequest();
         }
     }, [lnc.isConnected, lnc.lnd.lightning]);
+
+    useEffect(() => {
+        if (selectedShow[1]) {
+            episodesByFeedId(selectedShow[1].id).then((data: any) => {
+                setEpisodes(data);
+            });
+        } else {
+            setEpisodes([]);
+        }
+    }, [selectedShow]);
 
     return (
         <Page>
@@ -162,6 +147,56 @@ const Home: React.FC = () => {
                       }`
                     : 'Connect or Login to start listening to podcasts.'}
             </p>
+            {lnc.isConnected && (
+                <>
+                    <form onSubmit={handlePodcastSearch}>
+                        <label>
+                            Search for a podcast:{' '}
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={handleSearchChange}
+                            />
+                        </label>
+                        <input type="submit" value="Submit" />
+                    </form>
+                    {searchResults &&
+                        searchResults.map((o: any, index: number) => {
+                            return (
+                                <div key={index}>
+                                    <p>
+                                        {o.title} - Episode count:{' '}
+                                        {o.episodeCount}
+                                    </p>
+                                    <p
+                                        onClick={() =>
+                                            podcastByFeedId(o.id).then(
+                                                (data: any) => {
+                                                    console.log(data);
+                                                    subscriptions[o.title] =
+                                                        data;
+                                                    localStorage.setItem(
+                                                        SUBSCRIPTION_KEY,
+                                                        JSON.stringify(
+                                                            subscriptions
+                                                                ? subscriptions
+                                                                : {
+                                                                      [o.title]:
+                                                                          data
+                                                                  }
+                                                        )
+                                                    );
+                                                }
+                                            )
+                                        }
+                                    >
+                                        Add podcast to Apollo
+                                    </p>
+                                </div>
+                            );
+                        })}
+                </>
+            )}
             {lnc.isConnected && (
                 <>
                     <form>
@@ -187,7 +222,7 @@ const Home: React.FC = () => {
                     {activePodcast && <p>{activePodcast.title}</p>}
                     {activePodcast && (
                         <ReactAudioPlayer
-                            src={activePodcast.mp3}
+                            src={activePodcast.enclosureUrl}
                             autoPlay
                             controls
                             onListen={async () => {
@@ -197,7 +232,7 @@ const Home: React.FC = () => {
                                 // });
 
                                 // series
-                                for (const recipient of activePodcast.recipients) {
+                                for (const recipient of activePodcastFunding.destinations) {
                                     console.log(
                                         '! Starting processing of payment to',
                                         recipient.name
@@ -210,81 +245,119 @@ const Home: React.FC = () => {
                             listenInterval={60000}
                         />
                     )}
+                    {activePodcast && activePodcastFunding.destinations && (
+                        <p style={{ fontWeight: 'bold' }}>
+                            Value4Value recipients
+                        </p>
+                    )}
                     {activePodcast &&
-                        activePodcast.recipients &&
-                        activePodcast.recipients.map((o: any) => {
-                            return (
-                                <>
-                                    <p style={{ fontWeight: 'bold' }}>
-                                        {o.name} - {o.split}% -{' '}
-                                        {new BigNumber(satsPerMinute)
-                                            .multipliedBy(o.split)
-                                            .dividedBy(100)
-                                            .toString()}{' '}
-                                    </p>
-                                    {sent && sent[o.address] && (
+                        activePodcastFunding.destinations.map(
+                            (o: any, index: number) => {
+                                return (
+                                    <div key={index}>
+                                        <p>
+                                            {o.name} - {o.split}% -{' '}
+                                            {new BigNumber(satsPerMinute)
+                                                .multipliedBy(o.split)
+                                                .dividedBy(100)
+                                                .toString()}{' '}
+                                        </p>
+                                        {sent && sent[o.address] && (
+                                            <p
+                                                style={{
+                                                    color:
+                                                        sent[o.address] &&
+                                                        sent[o.address].gte(1)
+                                                            ? 'green'
+                                                            : 'black'
+                                                }}
+                                            >
+                                                Sent:{' '}
+                                                {sent[o.address]
+                                                    ? sent[o.address].toString()
+                                                    : '0'}{' '}
+                                            </p>
+                                        )}
+                                        {carry && carry[o.address] && (
+                                            <p
+                                                style={{
+                                                    color:
+                                                        carry[o.address] &&
+                                                        carry[o.address].gte(1)
+                                                            ? 'red'
+                                                            : 'black'
+                                                }}
+                                            >
+                                                Carry:{' '}
+                                                {carry[o.address]
+                                                    ? carry[
+                                                          o.address
+                                                      ].toString()
+                                                    : '0'}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            }
+                        )}
+                    {!!subscriptions && (
+                        <p style={{ fontWeight: 'bold' }}>Your subscriptions</p>
+                    )}
+                    {!!subscriptions ? (
+                        Object.entries(subscriptions).map(
+                            (o: any, key: any) => {
+                                const showName = o[0];
+                                return (
+                                    <div key={key}>
                                         <p
+                                            onClick={() => {
+                                                selectedShow[0] === showName
+                                                    ? setSelectedShow([])
+                                                    : setSelectedShow(o);
+                                            }}
                                             style={{
-                                                color:
-                                                    sent[o.address] &&
-                                                    sent[o.address].gte(1)
-                                                        ? 'green'
-                                                        : 'black'
+                                                fontWeight: 'bold'
                                             }}
                                         >
-                                            Sent:{' '}
-                                            {sent[o.address]
-                                                ? sent[o.address].toString()
-                                                : '0'}{' '}
+                                            {`${
+                                                selectedShow[0] === showName
+                                                    ? '⇃'
+                                                    : '⇁'
+                                            } ${showName}`}
                                         </p>
-                                    )}
-                                    {carry && carry[o.address] && (
-                                        <p
-                                            style={{
-                                                color:
-                                                    carry[o.address] &&
-                                                    carry[o.address].gte(1)
-                                                        ? 'red'
-                                                        : 'black'
-                                            }}
-                                        >
-                                            Carry:{' '}
-                                            {carry[o.address]
-                                                ? carry[o.address].toString()
-                                                : '0'}
-                                        </p>
-                                    )}
-                                </>
-                            );
-                        })}
-                    <h2>No Agenda</h2>
-                    {!!noAgenda.episodes &&
-                        noAgenda.episodes.map((o: any) => {
-                            return (
-                                <>
-                                    <p
-                                        key={o.title}
-                                        onClick={() => setActivePodcast(o)}
-                                    >
-                                        ▶️ {o.title}
-                                    </p>
-                                </>
-                            );
-                        })}
-                    <h2>Moe Factz</h2>
-                    {!!moeFactz.episodes &&
-                        moeFactz.episodes.map((o: any) => {
-                            return (
-                                <>
-                                    <p
-                                        key={o.title}
-                                        onClick={() => setActivePodcast(o)}
-                                    >
-                                        ▶️ {o.title}
-                                    </p>
-                                </>
-                            );
-                        })}
+                                        {selectedShow[0] === showName &&
+                                            episodes.map(
+                                                (
+                                                    episode: any,
+                                                    index: number
+                                                ) => {
+                                                    return (
+                                                        <p
+                                                            key={index}
+                                                            onClick={() => {
+                                                                setActivePodcastFunding(
+                                                                    subscriptions[
+                                                                        showName
+                                                                    ].value
+                                                                );
+                                                                setActivePodcast(
+                                                                    episode
+                                                                );
+                                                            }}
+                                                        >{`▶️ ${episode.title}`}</p>
+                                                    );
+                                                }
+                                            )}
+                                    </div>
+                                );
+                            }
+                        )
+                    ) : (
+                        <p>
+                            No subscriptions added yet. Search for your favorite
+                            podcasts above.
+                        </p>
+                    )}
                 </>
             )}
         </Page>
