@@ -233,6 +233,8 @@ const Home: React.FC = () => {
         }
     });
 
+    console.log('wow', activePodcast);
+
     return (
         <Page
             satsPerMinute={satsPerMinute}
@@ -318,9 +320,22 @@ const Home: React.FC = () => {
                                         + Subscribe
                                     </p>
                                     <p style={{ display: 'inline-block' }}>
-                                        {o.title} - {o.author} - (
+                                        {o.title}{' '}
+                                        {o.author ? `- ${o.author}` : ''} (
                                         {o.episodeCount})
                                     </p>
+                                    {o.image && (
+                                        <img
+                                            src={o.image}
+                                            width={50}
+                                            style={{ margin: 20 }}
+                                            onError={({ currentTarget }) => {
+                                                currentTarget.onerror = null; // prevents looping
+                                                currentTarget.src =
+                                                    'placeholder.png';
+                                            }}
+                                        />
+                                    )}
                                 </div>
                             );
                         })}
@@ -328,7 +343,25 @@ const Home: React.FC = () => {
             )}
             {lnc.isConnected && (
                 <>
-                    {activePodcast && <p>{activePodcast.title}</p>}
+                    {activePodcast && <h2>{activePodcast.title}</h2>}
+                    {activePodcast && activePodcast.feedImage && (
+                        <img
+                            src={activePodcast.feedImage}
+                            width={400}
+                            style={{ margin: 20, alignItems: 'center' }}
+                            onError={({ currentTarget }) => {
+                                currentTarget.onerror = null; // prevents looping
+                                currentTarget.src = 'placeholder.png';
+                            }}
+                        />
+                    )}
+                    {activePodcast && activePodcast.description && (
+                        <div
+                            dangerouslySetInnerHTML={{
+                                __html: activePodcast.description
+                            }}
+                        />
+                    )}
                     {activePodcast && (
                         <ReactAudioPlayer
                             src={activePodcast.enclosureUrl}
@@ -499,6 +532,17 @@ const Home: React.FC = () => {
                                                 ❌
                                             </p>
                                         )}
+                                        {selectedShow[0] === showName &&
+                                            selectedShow[1].image && (
+                                                <img
+                                                    src={selectedShow[1].image}
+                                                    width={400}
+                                                    style={{
+                                                        display: 'block',
+                                                        marginBottom: 20
+                                                    }}
+                                                />
+                                            )}
                                         {selectedShow[0] === showName &&
                                             episodes.map(
                                                 (
