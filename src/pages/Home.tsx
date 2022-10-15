@@ -21,7 +21,6 @@ const SUBSCRIPTION_KEY = 'apollo-subscriptions';
 
 // pull from local localStorage
 // TODO make util
-let subscriptions = JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY) || '');
 
 const Home: React.FC = () => {
     const { lnc } = useLNC();
@@ -43,6 +42,13 @@ const Home: React.FC = () => {
 
     const [selectedShow, setSelectedShow]: [any, any] = useState('');
     const [episodes, setEpisodes]: [any, any] = useState([]);
+    const [subscriptions, setSubscriptions]: [any, any] = useState(
+        localStorage.getItem(SUBSCRIPTION_KEY)
+            ? JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY) || '')
+            : {}
+    );
+
+    const [editMode, toggleEditMode] = useState(false);
 
     const keysend = async (
         destination: string,
@@ -82,6 +88,19 @@ const Home: React.FC = () => {
         });
 
         return info;
+    };
+
+    const deleteShow = (showName: string) => {
+        const newSubscriptions = subscriptions;
+
+        delete newSubscriptions[showName];
+        localStorage.setItem(
+            SUBSCRIPTION_KEY,
+            JSON.stringify(newSubscriptions)
+        );
+        setSubscriptions(
+            JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY) || '')
+        );
     };
 
     const processPayment = async (o: any) => {
@@ -209,42 +228,71 @@ const Home: React.FC = () => {
                                 onChange={handleSearchChange}
                             />
                         </label>
-                        <input type="submit" value="Submit" />
+                        <input type="submit" value="Search" />
                     </form>
                     {searchResults &&
                         searchResults.map((o: any, index: number) => {
                             return (
                                 <div key={index}>
-                                    <p>
-                                        {o.title} - Episode count:{' '}
-                                        {o.episodeCount}
-                                    </p>
                                     <p
+                                        style={{
+                                            cursor: 'pointer',
+                                            display: 'inline-block',
+                                            backgroundColor: 'darkgreen',
+                                            color: 'white',
+                                            marginRight: 10,
+                                            padding: 8
+                                        }}
                                         onClick={() =>
                                             podcastByFeedId(o.id).then(
                                                 (data: any) => {
                                                     subscriptions[o.title] =
                                                         data;
+
+                                                    const sortedSubscriptions =
+                                                        Object.keys(
+                                                            subscriptions
+                                                        )
+                                                            .sort()
+                                                            .reduce(
+                                                                (
+                                                                    accumulator: any,
+                                                                    key: string
+                                                                ) => {
+                                                                    accumulator[
+                                                                        key
+                                                                    ] =
+                                                                        subscriptions[
+                                                                            key
+                                                                        ];
+
+                                                                    return accumulator;
+                                                                },
+                                                                {}
+                                                            );
                                                     localStorage.setItem(
                                                         SUBSCRIPTION_KEY,
                                                         JSON.stringify(
-                                                            subscriptions
-                                                                ? subscriptions
-                                                                : {
-                                                                      [o.title]:
-                                                                          data
-                                                                  }
+                                                            sortedSubscriptions
                                                         )
                                                     );
-                                                    subscriptions =
-                                                        localStorage.getItem(
-                                                            SUBSCRIPTION_KEY
-                                                        );
+                                                    setSubscriptions(
+                                                        JSON.parse(
+                                                            localStorage.getItem(
+                                                                SUBSCRIPTION_KEY
+                                                            ) || ''
+                                                        )
+                                                    );
+                                                    setSearchResults([]);
                                                 }
                                             )
                                         }
                                     >
-                                        Add podcast to Apollo
+                                        + Subscribe
+                                    </p>
+                                    <p style={{ display: 'inline-block' }}>
+                                        {o.title} - {o.author} - (
+                                        {o.episodeCount})
                                     </p>
                                 </div>
                             );
@@ -286,30 +334,44 @@ const Home: React.FC = () => {
                                 // });
 
                                 // series
-                                for (const recipient of activePodcastFunding.destinations) {
-                                    console.log(
-                                        '! Starting processing of payment to',
-                                        recipient.name
-                                    );
-                                    await processPayment(recipient);
+                                if (activePodcastFunding) {
+                                    for (const recipient of activePodcastFunding.destinations) {
+                                        console.log(
+                                            '! Starting processing of payment to',
+                                            recipient.name
+                                        );
+                                        await processPayment(recipient);
+                                    }
                                 }
+
                                 return;
                             }}
                             // trigger onListen every minute
                             listenInterval={60000}
+                            style={{
+                                width: '100%'
+                            }}
                         />
                     )}
-                    {activePodcast && activePodcastFunding.destinations && (
-                        <p style={{ fontWeight: 'bold' }}>
-                            Value4Value recipients
-                        </p>
-                    )}
-                    {activePodcast && activePodcastFunding.destinations && (
-                        <p style={{ fontWeight: 'bold' }}>
-                            Total sent: {sentTotal.toString()}
-                        </p>
+                    {activePodcast &&
+                        activePodcastFunding &&
+                        activePodcastFunding.destinations && (
+                            <p style={{ fontWeight: 'bold' }}>
+                                Value4Value recipients
+                            </p>
+                        )}
+                    {activePodcast &&
+                        activePodcastFunding &&
+                        activePodcastFunding.destinations && (
+                            <p style={{ fontWeight: 'bold' }}>
+                                Total sent: {sentTotal.toString()}
+                            </p>
+                        )}
+                    {activePodcast && !activePodcastFunding && (
+                        <p>This podcast doesn't support Value4Value payments</p>
                     )}
                     {activePodcast &&
+                        activePodcastFunding &&
                         activePodcastFunding.destinations.map(
                             (o: any, index: number) => {
                                 return (
@@ -360,7 +422,26 @@ const Home: React.FC = () => {
                             }
                         )}
                     {!!subscriptions && (
-                        <p style={{ fontWeight: 'bold' }}>Your subscriptions</p>
+                        <>
+                            <p
+                                style={{
+                                    fontWeight: 'bold',
+                                    display: 'inline-block'
+                                }}
+                            >
+                                Your subscriptions
+                            </p>
+                            <p
+                                style={{
+                                    cursor: 'pointer',
+                                    display: 'inline-block',
+                                    marginLeft: 10
+                                }}
+                                onClick={() => toggleEditMode(!editMode)}
+                            >
+                                ✎
+                            </p>
+                        </>
                     )}
                     {!!subscriptions ? (
                         Object.entries(subscriptions).map(
@@ -376,7 +457,8 @@ const Home: React.FC = () => {
                                             }}
                                             style={{
                                                 fontWeight: 'bold',
-                                                cursor: 'pointer'
+                                                cursor: 'pointer',
+                                                display: 'inline-block'
                                             }}
                                         >
                                             {`${
@@ -385,6 +467,20 @@ const Home: React.FC = () => {
                                                     : '⇁'
                                             } ${showName}`}
                                         </p>
+                                        {editMode && (
+                                            <p
+                                                style={{
+                                                    cursor: 'pointer',
+                                                    display: 'inline-block',
+                                                    marginLeft: 10
+                                                }}
+                                                onClick={() =>
+                                                    deleteShow(showName)
+                                                }
+                                            >
+                                                ❌
+                                            </p>
+                                        )}
                                         {selectedShow[0] === showName &&
                                             episodes.map(
                                                 (
