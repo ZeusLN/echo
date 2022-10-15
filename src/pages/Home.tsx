@@ -8,6 +8,7 @@ import {
     episodesByFeedId
 } from '../utils/RequestUtils';
 
+import { cloneDeep } from 'lodash';
 import BigNumber from 'bignumber.js';
 import { sha256 } from 'js-sha256';
 import ReactAudioPlayer from 'react-audio-player';
@@ -33,6 +34,10 @@ const Home: React.FC = () => {
     const [activePodcast, setActivePodcast]: [any, any] = useState(null);
     const [activePodcastFunding, setActivePodcastFunding]: [any, any] =
         useState(null);
+    const [activePodcastFundingUnmodified, setActivePodcastFundingUnmodified]: [
+        any,
+        any
+    ] = useState(null);
     // keep track of sent, and to send - can't keysend millisats
     const [sent, setSent]: [any, any] = useState({});
     const [carry, setCarry]: [any, any] = useState({});
@@ -49,6 +54,8 @@ const Home: React.FC = () => {
     );
 
     const [editMode, toggleEditMode] = useState(false);
+    const [showSettings, toggleShowSettings] = useState(false);
+    const [supportApollo, toggleSupportApollo] = useState(true);
 
     const keysend = async (
         destination: string,
@@ -169,6 +176,27 @@ const Home: React.FC = () => {
         searchPodcasts(search).then((data: any) => setSearchResults(data));
     };
 
+    const setFunding = (funding: any) => {
+        const newFunding = cloneDeep(funding);
+        if (supportApollo && newFunding && newFunding.destinations) {
+            newFunding.destinations[0].split =
+                newFunding.destinations[0].split - 1;
+            newFunding.destinations.push({
+                address:
+                    '031b301307574bbe9b9ac7b79cbe1700e31e544513eae0b5d7497483083f99e581',
+                name: 'Zeus + Apollo Developer Fund',
+                type: 'node',
+                split: 1
+            });
+        }
+        setActivePodcastFundingUnmodified(funding);
+        setActivePodcastFunding(newFunding);
+    };
+
+    useEffect(() => {
+        setFunding(activePodcastFundingUnmodified);
+    }, [supportApollo]);
+
     useEffect(() => {
         if (lnc.isConnected) {
             const sendRequest = async () => {
@@ -208,7 +236,14 @@ const Home: React.FC = () => {
     });
 
     return (
-        <Page>
+        <Page
+            satsPerMinute={satsPerMinute}
+            showSettings={showSettings}
+            toggleShowSettings={toggleShowSettings}
+            setSatsPerMinute={setSatsPerMinute}
+            supportApollo={supportApollo}
+            toggleSupportApollo={toggleSupportApollo}
+        >
             <h2 className="text-center">Welcome to Apollo</h2>
             <p className="text-center">
                 {lnc.isConnected
@@ -301,26 +336,6 @@ const Home: React.FC = () => {
             )}
             {lnc.isConnected && (
                 <>
-                    <form>
-                        <label>
-                            <p>Sats per minute:</p>
-                            <input
-                                type="text"
-                                value={satsPerMinute}
-                                onChange={(e: any) =>
-                                    setSatsPerMinute(e.target.value)
-                                }
-                                style={{
-                                    color: 'orange',
-                                    fontSize: 50,
-                                    width: 100,
-                                    textAlign: 'center',
-                                    background: 'transparent',
-                                    border: 'none'
-                                }}
-                            />
-                        </label>
-                    </form>
                     {activePodcast && <p>{activePodcast.title}</p>}
                     {activePodcast && (
                         <ReactAudioPlayer
@@ -463,8 +478,8 @@ const Home: React.FC = () => {
                                         >
                                             {`${
                                                 selectedShow[0] === showName
-                                                    ? '⇃'
-                                                    : '⇁'
+                                                    ? '▼'
+                                                    : '▶'
                                             } ${showName}`}
                                         </p>
                                         {editMode && (
@@ -491,7 +506,7 @@ const Home: React.FC = () => {
                                                         <p
                                                             key={index}
                                                             onClick={() => {
-                                                                setActivePodcastFunding(
+                                                                setFunding(
                                                                     subscriptions[
                                                                         showName
                                                                     ].value
