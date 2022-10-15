@@ -76,25 +76,27 @@ const Page: React.FC<Props> = ({
                                     </Button>
                                 )}
                             </div>
-                            <Form className="d-flex">
-                                <Form.Control
-                                    type="search"
-                                    placeholder="Search for a podcast"
-                                    className="me-2"
-                                    aria-label="Search"
-                                    value={search}
-                                    onChange={(event: any) =>
-                                        setSearch(event.target.value)
-                                    }
-                                />
-                                <Button
-                                    variant="outline-success"
-                                    style={{ marginRight: 15 }}
-                                    onClick={() => searchForPodcast(search)}
-                                >
-                                    Search
-                                </Button>
-                            </Form>
+                            {lnc.isConnected && (
+                                <Form className="d-flex">
+                                    <Form.Control
+                                        type="search"
+                                        placeholder="Search for a podcast"
+                                        className="me-2"
+                                        aria-label="Search"
+                                        value={search}
+                                        onChange={(event: any) =>
+                                            setSearch(event.target.value)
+                                        }
+                                    />
+                                    <Button
+                                        variant="outline-success"
+                                        style={{ marginRight: 15 }}
+                                        onClick={() => searchForPodcast(search)}
+                                    >
+                                        Search
+                                    </Button>
+                                </Form>
+                            )}
                             {lnc.isConnected ? (
                                 <a href="/">
                                     <Button
