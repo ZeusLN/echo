@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@babel/core": "7.16.0",
-    "@lightninglabs/lnc-web": "0.1.11-alpha",
+    "@lightninglabs/lnc-web": "0.1.12-alpha",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.3",
     "@svgr/webpack": "5.5.0",
     "@testing-library/jest-dom": "5.16.4",
@@ -60,6 +60,7 @@
     "react-dom": "18.1.0",
     "react-refresh": "0.11.0",
     "react-router-dom": "6.3.0",
+    "react-toastify": "9.0.8",
     "resolve": "1.20.0",
     "resolve-url-loader": "4.0.0",
     "rss-parser": "3.12.0",

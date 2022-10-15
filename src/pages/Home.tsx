@@ -9,8 +9,11 @@ import {
 } from '../utils/RequestUtils';
 
 import BigNumber from 'bignumber.js';
-import ReactAudioPlayer from 'react-audio-player';
 import { sha256 } from 'js-sha256';
+import ReactAudioPlayer from 'react-audio-player';
+
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const randomBytes = require('randombytes');
 
@@ -27,7 +30,7 @@ const Home: React.FC = () => {
     const [searchResults, setSearchResults] = useState<any>([]);
 
     //
-    const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(5);
+    const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(2);
     const [activePodcast, setActivePodcast]: [any, any] = useState(null);
     const [activePodcastFunding, setActivePodcastFunding]: [any, any] =
         useState(null);
@@ -35,21 +38,49 @@ const Home: React.FC = () => {
     const [sent, setSent]: [any, any] = useState({});
     const [carry, setCarry]: [any, any] = useState({});
 
+    const [sentTotal, setSentTotal]: [any, any] = useState(0);
+    const [carryTotal, setCarryTotal]: [any, any] = useState(0);
+
     const [selectedShow, setSelectedShow]: [any, any] = useState('');
     const [episodes, setEpisodes]: [any, any] = useState([]);
 
-    const keysend = async (destination: string, amount: number) => {
+    const keysend = async (
+        destination: string,
+        amount: number,
+        name: string
+    ) => {
         const preimage = randomBytes(32);
         const secret = preimage.toString('base64');
         const paymentHash = hexToBase64(sha256(preimage));
         const destCustomRecords = { '5482373484': secret };
-        const info = await lnc.lnd.lightning.sendPaymentSync({
-            dest: hexToBase64(destination),
-            amt: amount.toString(),
-            destCustomRecords,
-            paymentHash
+
+        const info = new Promise<any>(async (resolve, reject) => {
+            await lnc.lnd.router.sendPaymentV2(
+                {
+                    dest: hexToBase64(destination),
+                    amt: amount.toString(),
+                    destCustomRecords,
+                    paymentHash,
+                    timeoutSeconds: 30
+                },
+                (event: any) => {
+                    if (event.status === 'SUCCEEDED') resolve(event);
+                    if (event.status === 'FAILED') reject(event);
+                },
+                (error: Error) => {
+                    if (error.toString() !== 'Error: EOF') reject();
+                }
+            );
         });
-        console.log(info);
+        const msg = `payment of ${amount} ${
+            amount > 1 ? 'sats' : 'sat'
+        } to ${name}`;
+        toast.promise(info, {
+            pending: `Attempting ${msg}`,
+            success: `Successful ${msg}`,
+            error: `Failed ${msg} 😭`
+        });
+
         return info;
     };
 
@@ -76,15 +107,17 @@ const Home: React.FC = () => {
 
         // attempt keysend here
         if (amountToSend.gt(0)) {
-            const result = await keysend(o.address, amountToSend.toNumber());
-            if (!!result.paymentRoute) {
-                console.info(
-                    `SUCCESS: Payment of ${amountToSend} to ${o.name}`
-                );
+            const result = await keysend(
+                o.address,
+                amountToSend.toNumber(),
+                o.name
+            );
+            if (result.status === 'SUCCEEDED') {
+                const msg = `SUCCESS: Payment of ${amountToSend} sats to ${o.name}`;
+                console.warn(msg);
             } else {
-                console.warn(
-                    `FAILURE: Payment of ${amountToSend} to ${o.name}`
-                );
+                const msg = `FAILURE: Payment of ${amountToSend} sats to ${o.name}`;
+                console.warn(msg);
                 failure = true;
             }
         }
@@ -137,6 +170,24 @@ const Home: React.FC = () => {
         }
     }, [selectedShow]);
 
+    useEffect(() => {
+        if (!!sent) {
+            let total = new BigNumber(0);
+            Object.keys(sent).map((o: any) => {
+                total = total.plus(sent[o]);
+                setSentTotal(total);
+            });
+        }
+
+        if (!!carry) {
+            let total = new BigNumber(0);
+            Object.keys(carry).map((o: any) => {
+                total = total.plus(carry[o]);
+                setCarryTotal(total);
+            });
+        }
+    });
+
     return (
         <Page>
             <h2 className="text-center">Welcome to Apollo</h2>
@@ -172,7 +223,6 @@ const Home: React.FC = () => {
                                         onClick={() =>
                                             podcastByFeedId(o.id).then(
                                                 (data: any) => {
-                                                    console.log(data);
                                                     subscriptions[o.title] =
                                                         data;
                                                     localStorage.setItem(
@@ -186,6 +236,10 @@ const Home: React.FC = () => {
                                                                   }
                                                         )
                                                     );
+                                                    subscriptions =
+                                                        localStorage.getItem(
+                                                            SUBSCRIPTION_KEY
+                                                        );
                                                 }
                                             )
                                         }
@@ -248,6 +302,11 @@ const Home: React.FC = () => {
                     {activePodcast && activePodcastFunding.destinations && (
                         <p style={{ fontWeight: 'bold' }}>
                             Value4Value recipients
+                        </p>
+                    )}
+                    {activePodcast && activePodcastFunding.destinations && (
+                        <p style={{ fontWeight: 'bold' }}>
+                            Total sent: {sentTotal.toString()}
                         </p>
                     )}
                     {activePodcast &&
@@ -316,7 +375,8 @@ const Home: React.FC = () => {
                                                     : setSelectedShow(o);
                                             }}
                                             style={{
-                                                fontWeight: 'bold'
+                                                fontWeight: 'bold',
+                                                cursor: 'pointer'
                                             }}
                                         >
                                             {`${
@@ -344,6 +404,9 @@ const Home: React.FC = () => {
                                                                     episode
                                                                 );
                                                             }}
+                                                            style={{
+                                                                cursor: 'pointer'
+                                                            }}
                                                         >{`▶️ ${episode.title}`}</p>
                                                     );
                                                 }
@@ -360,6 +423,7 @@ const Home: React.FC = () => {
                     )}
                 </>
             )}
+            <ToastContainer />
         </Page>
     );
 };
