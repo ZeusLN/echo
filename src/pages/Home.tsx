@@ -169,12 +169,10 @@ const Home: React.FC = () => {
         return;
     };
 
-    const handleSearchChange = (event: any) => setSearch(event.target.value);
-
-    const handlePodcastSearch = (event: any) => {
-        event.preventDefault();
-        searchPodcasts(search).then((data: any) => setSearchResults(data));
-    };
+    const searchForPodcast = (searchString: string) =>
+        searchPodcasts(searchString).then((data: any) =>
+            setSearchResults(data)
+        );
 
     const setFunding = (funding: any) => {
         const newFunding = cloneDeep(funding);
@@ -243,6 +241,9 @@ const Home: React.FC = () => {
             setSatsPerMinute={setSatsPerMinute}
             supportApollo={supportApollo}
             toggleSupportApollo={toggleSupportApollo}
+            search={search}
+            setSearch={setSearch}
+            searchForPodcast={searchForPodcast}
         >
             <h2 className="text-center">Welcome to Apollo</h2>
             <p className="text-center">
@@ -254,17 +255,6 @@ const Home: React.FC = () => {
             </p>
             {lnc.isConnected && (
                 <>
-                    <form onSubmit={handlePodcastSearch}>
-                        <label>
-                            Search for a podcast:{' '}
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={handleSearchChange}
-                            />
-                        </label>
-                        <input type="submit" value="Search" />
-                    </form>
                     {searchResults &&
                         searchResults.map((o: any, index: number) => {
                             return (
@@ -448,7 +438,7 @@ const Home: React.FC = () => {
                         )}
                     {!!subscriptions && (
                         <>
-                            <p
+                            <h4
                                 style={{
                                     fontWeight: 'bold',
                                     display: 'inline-block',
@@ -456,7 +446,7 @@ const Home: React.FC = () => {
                                 }}
                             >
                                 Your subscriptions
-                            </p>
+                            </h4>
                             <p
                                 style={{
                                     cursor: 'pointer',

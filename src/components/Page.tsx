@@ -13,6 +13,9 @@ interface Props {
     toggleShowSettings?: any;
     setSatsPerMinute?: any;
     toggleSupportApollo?: any;
+    search?: string;
+    setSearch?: any;
+    searchForPodcast?: any;
 }
 
 const Page: React.FC<Props> = ({
@@ -22,7 +25,10 @@ const Page: React.FC<Props> = ({
     toggleShowSettings,
     setSatsPerMinute,
     supportApollo,
-    toggleSupportApollo
+    toggleSupportApollo,
+    search,
+    setSearch,
+    searchForPodcast
 }) => {
     const { lnc } = useLNC();
     return (
@@ -70,6 +76,25 @@ const Page: React.FC<Props> = ({
                                     </Button>
                                 )}
                             </div>
+                            <Form className="d-flex">
+                                <Form.Control
+                                    type="search"
+                                    placeholder="Search for a podcast"
+                                    className="me-2"
+                                    aria-label="Search"
+                                    value={search}
+                                    onChange={(event: any) =>
+                                        setSearch(event.target.value)
+                                    }
+                                />
+                                <Button
+                                    variant="outline-success"
+                                    style={{ marginRight: 15 }}
+                                    onClick={() => searchForPodcast(search)}
+                                >
+                                    Search
+                                </Button>
+                            </Form>
                             {lnc.isConnected ? (
                                 <a href="/">
                                     <Button
