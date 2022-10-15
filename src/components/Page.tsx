@@ -21,12 +21,16 @@ const Page: React.FC<Props> = ({ children }) => {
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="ml-auto">
                             {lnc.isConnected ? (
-                                <>
-                                    <Navbar.Text>Connected</Navbar.Text>
-                                    <a href="/">
-                                        <Button variant="link">Logout</Button>
-                                    </a>
-                                </>
+                                <a href="/">
+                                    <Button
+                                        style={{
+                                            background: 'darkred',
+                                            borderWidth: 0
+                                        }}
+                                    >
+                                        Logout
+                                    </Button>
+                                </a>
                             ) : lnc.credentials.isPaired ? (
                                 <Link to="/login">
                                     <Button>Login</Button>
