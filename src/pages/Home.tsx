@@ -371,7 +371,7 @@ const Home: React.FC = () => {
                     {activePodcast &&
                         activePodcastFunding &&
                         activePodcastFunding.destinations && (
-                            <p style={{ fontWeight: 'bold' }}>
+                            <p style={{ fontWeight: 'bold', marginTop: 20 }}>
                                 Value4Value recipients
                             </p>
                         )}
@@ -391,16 +391,24 @@ const Home: React.FC = () => {
                             (o: any, index: number) => {
                                 return (
                                     <div key={index}>
-                                        <p>
-                                            {o.name} - {o.split}% -{' '}
+                                        <p
+                                            style={{
+                                                display: 'inline-block',
+                                                margin: 5
+                                            }}
+                                        >
+                                            {o.name} ({o.split}% |{' '}
                                             {new BigNumber(satsPerMinute)
                                                 .multipliedBy(o.split)
                                                 .dividedBy(100)
                                                 .toString()}{' '}
+                                            s/m)
                                         </p>
                                         {sent && sent[o.address] && (
                                             <p
                                                 style={{
+                                                    display: 'inline-block',
+                                                    margin: 5,
                                                     color:
                                                         sent[o.address] &&
                                                         sent[o.address].gte(1)
@@ -417,6 +425,8 @@ const Home: React.FC = () => {
                                         {carry && carry[o.address] && (
                                             <p
                                                 style={{
+                                                    display: 'inline-block',
+                                                    margin: 5,
                                                     color:
                                                         carry[o.address] &&
                                                         carry[o.address].gte(1)
@@ -441,7 +451,8 @@ const Home: React.FC = () => {
                             <p
                                 style={{
                                     fontWeight: 'bold',
-                                    display: 'inline-block'
+                                    display: 'inline-block',
+                                    marginTop: 50
                                 }}
                             >
                                 Your subscriptions
