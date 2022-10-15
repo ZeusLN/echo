@@ -245,11 +245,13 @@ const Home: React.FC = () => {
             setSearch={setSearch}
             searchForPodcast={searchForPodcast}
         >
-            <h2 className="text-center">Welcome to Apollo</h2>
+            {!lnc.isConnected && (
+                <h2 className="text-center">Welcome to Apollo</h2>
+            )}
             <p className="text-center">
                 {lnc.isConnected
                     ? `You are now connected to your Lightning node, ${
-                          info && info.alias ? info.alias : ''
+                          info && info.alias ? info.alias : info.identityPubkey
                       }`
                     : 'Connect or Login to start listening to podcasts.'}
             </p>
@@ -514,6 +516,9 @@ const Home: React.FC = () => {
                                                                 );
                                                                 setActivePodcast(
                                                                     episode
+                                                                );
+                                                                setSearchResults(
+                                                                    []
                                                                 );
                                                             }}
                                                             style={{
