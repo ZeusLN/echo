@@ -183,15 +183,21 @@ const Home: React.FC = () => {
 
         // attempt keysend here
         if (amountToSend.gt(0)) {
-            const result = await keysend(
-                o.address,
-                amountToSend.toNumber(),
-                o.name
-            );
-            if (result.status === 'SUCCEEDED') {
-                const msg = `SUCCESS: Payment of ${amountToSend} sats to ${o.name}`;
-                console.warn(msg);
-            } else {
+            try {
+                const result = await keysend(
+                    o.address,
+                    amountToSend.toNumber(),
+                    o.name
+                );
+                if (result.status === 'SUCCEEDED') {
+                    const msg = `SUCCESS: Payment of ${amountToSend} sats to ${o.name}`;
+                    console.warn(msg);
+                } else {
+                    const msg = `FAILURE: Payment of ${amountToSend} sats to ${o.name}`;
+                    console.warn(msg);
+                    failure = true;
+                }
+            } catch {
                 const msg = `FAILURE: Payment of ${amountToSend} sats to ${o.name}`;
                 console.warn(msg);
                 failure = true;
