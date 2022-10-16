@@ -77,7 +77,13 @@ const Page: React.FC<Props> = ({
                                 )}
                             </div>
                             {lnc.isConnected && (
-                                <Form className="d-flex">
+                                <Form
+                                    className="d-flex"
+                                    onSubmit={(event: any) => {
+                                        searchForPodcast(search);
+                                        event.preventDefault();
+                                    }}
+                                >
                                     <Form.Control
                                         type="search"
                                         placeholder="Search for a podcast"
@@ -87,10 +93,6 @@ const Page: React.FC<Props> = ({
                                         onChange={(event: any) =>
                                             setSearch(event.target.value)
                                         }
-                                        onSubmit={(event: any) => {
-                                            searchForPodcast(search);
-                                            event.preventDefault();
-                                        }}
                                     />
                                     <Button
                                         variant="outline-success"
