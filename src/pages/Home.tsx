@@ -375,6 +375,7 @@ const Home: React.FC = () => {
                                     </p>
                                     {o.image && (
                                         <img
+                                            alt={`${o.title} artwork`}
                                             src={o.image}
                                             width={50}
                                             style={{ margin: 20 }}
@@ -396,6 +397,7 @@ const Home: React.FC = () => {
                     {activePodcast && <h2>{activePodcast.title}</h2>}
                     {activePodcast && activePodcast.feedImage && (
                         <img
+                            alt={`${activePodcast.title} artwork`}
                             src={activePodcast.feedImage}
                             width={400}
                             style={{ margin: 20, alignItems: 'center' }}
@@ -670,6 +672,7 @@ const Home: React.FC = () => {
                                         {selectedShow[0] === showName &&
                                             selectedShow[1].image && (
                                                 <img
+                                                    alt={`${showName} artwork`}
                                                     src={selectedShow[1].image}
                                                     width={400}
                                                     style={{
