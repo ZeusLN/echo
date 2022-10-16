@@ -303,8 +303,25 @@ const Home: React.FC = () => {
                     ? `You are now connected to your Lightning node, ${
                           info && info.alias ? info.alias : info.identityPubkey
                       }`
-                    : 'Connect or Login to start listening to podcasts.'}
+                    : 'Connect or Login to start listening to podcasts and paying your favorite producers with Bitcoin over the Lightning Network.'}
             </p>
+            {!lnc.isConnected && (
+                <p className="text-center">
+                    Powered by Podcasting 2.0, Lightning Node Connect, and{' '}
+                    <a target="_blank" rel="noreferrer">
+                        PodcastIndex.org
+                    </a>
+                    .{' '}
+                    <a
+                        target="_blank"
+                        rel="noreferrer"
+                        href="https://value4value.info/"
+                    >
+                        Learn more.
+                    </a>
+                </p>
+            )}
+
             {lnc.isConnected && (
                 <>
                     {searchResults &&
@@ -731,6 +748,17 @@ const Home: React.FC = () => {
                     )}
                 </>
             )}
+            <p className="text-center">
+                {`v${packageInfo.version}`} |{' '}
+                <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://github.com/ZeusLN/apollo"
+                >
+                    GitHub
+                </a>
+            </p>
+
             <ToastContainer />
         </Page>
     );
