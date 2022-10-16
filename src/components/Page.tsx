@@ -187,8 +187,7 @@ const Page: React.FC<Props> = ({
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="ml-auto">
                                 <Navbar.Text>
-                                    Support Echo development by sending Zeus
-                                    1%
+                                    Support Echo development by sending Zeus 1%
                                 </Navbar.Text>
                                 <Button
                                     style={{

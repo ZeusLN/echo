@@ -612,7 +612,7 @@ const Home: React.FC = () => {
                                 style={{
                                     display: 'inline-block',
                                     fontWeight: 'bold',
-                                    color: sentTotal.gt(0) ? 'green' : 'black'
+                                    color: sentTotal !== 0 ? 'green' : 'black'
                                 }}
                             >
                                 {`${sentTotal}`}
@@ -696,24 +696,27 @@ const Home: React.FC = () => {
                                 style={{
                                     fontWeight: 'bold',
                                     display: 'inline-block',
-                                    marginTop: 50
+                                    marginTop: 25
                                 }}
                             >
                                 Your subscriptions
                             </h4>
-                            <p
-                                style={{
-                                    cursor: 'pointer',
-                                    display: 'inline-block',
-                                    marginLeft: 10
-                                }}
-                                onClick={() => toggleEditMode(!editMode)}
-                            >
-                                ✎
-                            </p>
+                            {Object.keys(subscriptions).length > 0 && (
+                                <p
+                                    style={{
+                                        cursor: 'pointer',
+                                        display: 'inline-block',
+                                        marginLeft: 10
+                                    }}
+                                    onClick={() => toggleEditMode(!editMode)}
+                                >
+                                    ✎
+                                </p>
+                            )}
                         </>
                     )}
-                    {!!subscriptions ? (
+                    {!!subscriptions &&
+                    Object.keys(subscriptions).length > 0 ? (
                         Object.entries(subscriptions).map(
                             (o: any, key: any) => {
                                 const showName = o[0];
@@ -813,7 +816,7 @@ const Home: React.FC = () => {
                     )}
                 </>
             )}
-            <p className="text-center">
+            <p className="text-center" style={{ marginTop: 50 }}>
                 {`v${packageInfo.version}`} |{' '}
                 <a
                     target="_blank"
