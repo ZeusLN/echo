@@ -24,37 +24,43 @@ const DEFAULT_BOOST_AMT = 1_000;
 const DEFAULT_SATS_PER_MINUTE = 100;
 const DEFAULT_BOOST_SENDER = 'An anonymous Apollo user';
 
-// pull from local localStorage
-// TODO make util
-
 const Home: React.FC = () => {
     const { lnc } = useLNC();
     const [info, setInfo] = useState<any>({});
+
+    // SEARCH
     const [search, setSearch] = useState<any>('');
     const [searchResults, setSearchResults] = useState<any>([]);
 
-    //
+    // NAVIGATION
+    const [selectedShow, setSelectedShow]: [any, any] = useState('');
+    const [episodes, setEpisodes]: [any, any] = useState([]);
+
+    // SETTINGS
+    const [showSettings, toggleShowSettings] = useState(false);
     const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(
         DEFAULT_SATS_PER_MINUTE
     );
+    const [supportApollo, toggleSupportApollo] = useState(true);
+
+    // NOW PLAYING
     const [activePodcast, setActivePodcast]: [any, any] = useState(null);
     const [activeShow, setActiveShow]: [any, any] = useState(null);
-
     const [activePodcastFunding, setActivePodcastFunding]: [any, any] =
         useState(null);
     const [activePodcastFundingUnmodified, setActivePodcastFundingUnmodified]: [
         any,
         any
     ] = useState(null);
+
+    // STATS
     // keep track of sent, and to send - can't keysend millisats
     const [sent, setSent]: [any, any] = useState({});
     const [carry, setCarry]: [any, any] = useState({});
-
     const [sentTotal, setSentTotal]: [any, any] = useState(0);
-    const [carryTotal, setCarryTotal]: [any, any] = useState(0);
+    const [showStats, toggleShowStats] = useState(false);
 
-    const [selectedShow, setSelectedShow]: [any, any] = useState('');
-    const [episodes, setEpisodes]: [any, any] = useState([]);
+    // SUBSCRIPTIONS
     const [subscriptions, setSubscriptions]: [any, any] = useState(
         localStorage.getItem(LOCALSTORAGE_SUBSCRIPTION_KEY)
             ? JSON.parse(
@@ -62,10 +68,7 @@ const Home: React.FC = () => {
               )
             : {}
     );
-
     const [editMode, toggleEditMode] = useState(false);
-    const [showSettings, toggleShowSettings] = useState(false);
-    const [supportApollo, toggleSupportApollo] = useState(true);
 
     // BOOSTS
     const [boostRecipient, setBoostRecipient] = useState(null);
@@ -279,14 +282,6 @@ const Home: React.FC = () => {
                 setSentTotal(total);
             });
         }
-
-        if (!!carry) {
-            let total = new BigNumber(0);
-            Object.keys(carry).map((o: any) => {
-                total = total.plus(carry[o]);
-                setCarryTotal(total);
-            });
-        }
     });
 
     return (
@@ -300,6 +295,9 @@ const Home: React.FC = () => {
             search={search}
             setSearch={setSearch}
             searchForPodcast={searchForPodcast}
+            sentTotal={sentTotal}
+            showStats={showStats}
+            toggleShowStats={toggleShowStats}
         >
             {!lnc.isConnected && (
                 <h2 className="text-center">Welcome to Apollo</h2>
@@ -414,6 +412,220 @@ const Home: React.FC = () => {
                         })}
                 </>
             )}
+
+            {showStats && activePodcast && activePodcastFunding && (
+                <div style={{ marginBottom: 50 }}>
+                    {boostRecipient && (
+                        <>
+                            <h4
+                                style={{
+                                    marginTop: 25,
+                                    display: 'inline-block'
+                                }}
+                            >
+                                Submit a boost to {boostRecipientName}
+                            </h4>
+                            <p
+                                style={{
+                                    cursor: 'pointer',
+                                    display: 'inline-block',
+                                    marginLeft: 10
+                                }}
+                                onClick={() => setBoostRecipient(null)}
+                            >
+                                ❌
+                            </p>
+                            <form
+                                onSubmit={(event: any) => {
+                                    keysend(
+                                        boostRecipient,
+                                        boostAmount,
+                                        boostRecipientName,
+                                        boostMessage,
+                                        boostSender
+                                    );
+                                    event.preventDefault();
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    marginBottom: 50
+                                }}
+                            >
+                                <label>
+                                    Amount:
+                                    <input
+                                        type="text"
+                                        name="amount"
+                                        value={boostAmount}
+                                        style={{
+                                            marginLeft: 10,
+                                            borderRadius: 5
+                                        }}
+                                        onChange={(event: any) =>
+                                            setBoostAmount(
+                                                Number(event.target.value)
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <label>
+                                    Boostagram Message (optional):
+                                    <input
+                                        type="text"
+                                        name="message"
+                                        value={boostMessage}
+                                        style={{
+                                            marginLeft: 10,
+                                            borderRadius: 5
+                                        }}
+                                        onChange={(event: any) =>
+                                            setBoostMessage(event.target.value)
+                                        }
+                                    />
+                                </label>
+                                <label>
+                                    Sender name (optional):
+                                    <input
+                                        type="text"
+                                        name="sender"
+                                        value={boostSender}
+                                        style={{
+                                            marginLeft: 10,
+                                            borderRadius: 5
+                                        }}
+                                        onChange={(event: any) =>
+                                            setBoostSender(event.target.value)
+                                        }
+                                        placeholder="An anonymous Apollo user"
+                                    />
+                                </label>
+                                <input
+                                    type="submit"
+                                    value="Submit"
+                                    style={{ borderRadius: 5 }}
+                                />
+                            </form>
+                        </>
+                    )}
+                    <h4>Stats</h4>
+                    {activePodcastFunding.destinations && (
+                        <p
+                            style={{
+                                fontWeight: 'bold',
+                                marginTop: 20,
+                                fontSize: 20
+                            }}
+                        >
+                            Value4Value recipients
+                        </p>
+                    )}
+
+                    {activePodcastFunding.destinations.map(
+                        (o: any, index: number) => {
+                            return (
+                                <div key={index}>
+                                    <p
+                                        style={{
+                                            display: 'inline-block',
+                                            margin: 5
+                                        }}
+                                    >
+                                        {o.name} ({o.split}% |{' '}
+                                        {new BigNumber(satsPerMinute)
+                                            .multipliedBy(o.split)
+                                            .dividedBy(100)
+                                            .toString()}{' '}
+                                        s/m)
+                                    </p>
+                                    {sent && sent[o.address] && (
+                                        <p
+                                            style={{
+                                                display: 'inline-block',
+                                                margin: 5,
+                                                color:
+                                                    sent[o.address] &&
+                                                    sent[o.address].gte(1)
+                                                        ? 'green'
+                                                        : 'black'
+                                            }}
+                                        >
+                                            Sent:{' '}
+                                            {sent[o.address]
+                                                ? sent[o.address].toString()
+                                                : '0'}{' '}
+                                        </p>
+                                    )}
+                                    {carry && carry[o.address] && (
+                                        <p
+                                            style={{
+                                                display: 'inline-block',
+                                                margin: 5,
+                                                color:
+                                                    carry[o.address] &&
+                                                    carry[o.address].gte(1)
+                                                        ? 'red'
+                                                        : 'black'
+                                            }}
+                                        >
+                                            Carry:{' '}
+                                            {carry[o.address]
+                                                ? carry[o.address].toString()
+                                                : '0'}
+                                        </p>
+                                    )}
+                                    <p
+                                        style={{
+                                            display: 'inline-block',
+                                            margin: 5,
+                                            backgroundColor: 'lightblue',
+                                            color: 'white',
+                                            padding: 5,
+                                            paddingLeft: 10,
+                                            paddingRight: 10,
+                                            cursor: 'pointer',
+                                            borderRadius: 5
+                                        }}
+                                        onClick={() => {
+                                            setBoostRecipient(o.address);
+                                            setBoostRecipientName(o.name);
+                                        }}
+                                    >
+                                        BOOST ⚡
+                                    </p>
+                                </div>
+                            );
+                        }
+                    )}
+                    {activePodcastFunding.destinations && (
+                        <div style={{ marginTop: 20 }}>
+                            <p
+                                style={{
+                                    display: 'inline-block',
+                                    fontWeight: 'bold',
+                                    marginRight: 5
+                                }}
+                            >
+                                Total sent:
+                            </p>
+                            <p
+                                style={{
+                                    display: 'inline-block',
+                                    fontWeight: 'bold',
+                                    color: sentTotal.gt(0) ? 'green' : 'black'
+                                }}
+                            >
+                                {`${sentTotal}`}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activePodcast && !activePodcastFunding && (
+                <p>This podcast doesn't support Value4Value payments</p>
+            )}
+
             {lnc.isConnected && (
                 <>
                     {activePodcast && <h4>Now Playing</h4>}
@@ -426,25 +638,21 @@ const Home: React.FC = () => {
                             controls
                             onListen={async () => {
                                 // parallel
-                                // await activePodcast.recipients.map(async (o: any) => {
-                                //     await processPayment(o);
-                                // });
-
-                                // series
-                                if (activePodcastFunding) {
-                                    for (const recipient of activePodcastFunding.destinations) {
-                                        console.log(
-                                            '! Starting processing of payment to',
-                                            recipient.name
-                                        );
-                                        await processPayment(recipient);
-                                    }
+                                if (
+                                    activePodcastFunding &&
+                                    activePodcastFunding.destinations
+                                ) {
+                                    await activePodcastFunding.destinations.map(
+                                        async (o: any) => {
+                                            await processPayment(o);
+                                        }
+                                    );
                                 }
 
                                 return;
                             }}
                             // trigger onListen every minute
-                            listenInterval={60000}
+                            listenInterval={60_000}
                             style={{
                                 width: '100%',
                                 marginTop: 25
@@ -482,168 +690,6 @@ const Home: React.FC = () => {
                         </div>
                     )}
 
-                    {activePodcast && activePodcastFunding && boostRecipient && (
-                        <>
-                            <h4 style={{ marginTop: 50 }}>
-                                Submit a boost to {boostRecipientName}
-                            </h4>
-                            <form
-                                onSubmit={(event: any) => {
-                                    keysend(
-                                        boostRecipient,
-                                        boostAmount,
-                                        boostRecipientName,
-                                        boostMessage,
-                                        boostSender
-                                    );
-                                    event.preventDefault();
-                                }}
-                                style={{
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    marginBottom: 50
-                                }}
-                            >
-                                <label>
-                                    Amount:
-                                    <input
-                                        type="text"
-                                        name="amount"
-                                        value={boostAmount}
-                                        style={{ marginLeft: 10 }}
-                                        onChange={(event: any) =>
-                                            setBoostAmount(
-                                                Number(event.target.value)
-                                            )
-                                        }
-                                    />
-                                </label>
-                                <label>
-                                    Boostagram Message (optional):
-                                    <input
-                                        type="text"
-                                        name="message"
-                                        value={boostMessage}
-                                        style={{ marginLeft: 10 }}
-                                        onChange={(event: any) =>
-                                            setBoostMessage(event.target.value)
-                                        }
-                                    />
-                                </label>
-                                <label>
-                                    Sender name (optional):
-                                    <input
-                                        type="text"
-                                        name="sender"
-                                        value={boostSender}
-                                        style={{ marginLeft: 10 }}
-                                        onChange={(event: any) =>
-                                            setBoostSender(event.target.value)
-                                        }
-                                        placeholder="An anonymous Apollo user"
-                                    />
-                                </label>
-                                <input type="submit" value="Submit" />
-                            </form>
-                        </>
-                    )}
-                    {activePodcast &&
-                        activePodcastFunding &&
-                        activePodcastFunding.destinations && (
-                            <p style={{ fontWeight: 'bold', marginTop: 20 }}>
-                                Value4Value recipients
-                            </p>
-                        )}
-                    {activePodcast &&
-                        activePodcastFunding &&
-                        activePodcastFunding.destinations && (
-                            <p style={{ fontWeight: 'bold' }}>
-                                Total sent: {sentTotal.toString()}
-                            </p>
-                        )}
-                    {activePodcast && !activePodcastFunding && (
-                        <p>This podcast doesn't support Value4Value payments</p>
-                    )}
-                    {activePodcast &&
-                        activePodcastFunding &&
-                        activePodcastFunding.destinations.map(
-                            (o: any, index: number) => {
-                                return (
-                                    <div key={index}>
-                                        <p
-                                            style={{
-                                                display: 'inline-block',
-                                                margin: 5
-                                            }}
-                                        >
-                                            {o.name} ({o.split}% |{' '}
-                                            {new BigNumber(satsPerMinute)
-                                                .multipliedBy(o.split)
-                                                .dividedBy(100)
-                                                .toString()}{' '}
-                                            s/m)
-                                        </p>
-                                        {sent && sent[o.address] && (
-                                            <p
-                                                style={{
-                                                    display: 'inline-block',
-                                                    margin: 5,
-                                                    color:
-                                                        sent[o.address] &&
-                                                        sent[o.address].gte(1)
-                                                            ? 'green'
-                                                            : 'black'
-                                                }}
-                                            >
-                                                Sent:{' '}
-                                                {sent[o.address]
-                                                    ? sent[o.address].toString()
-                                                    : '0'}{' '}
-                                            </p>
-                                        )}
-                                        {carry && carry[o.address] && (
-                                            <p
-                                                style={{
-                                                    display: 'inline-block',
-                                                    margin: 5,
-                                                    color:
-                                                        carry[o.address] &&
-                                                        carry[o.address].gte(1)
-                                                            ? 'red'
-                                                            : 'black'
-                                                }}
-                                            >
-                                                Carry:{' '}
-                                                {carry[o.address]
-                                                    ? carry[
-                                                          o.address
-                                                      ].toString()
-                                                    : '0'}
-                                            </p>
-                                        )}
-                                        <p
-                                            style={{
-                                                display: 'inline-block',
-                                                margin: 5,
-                                                backgroundColor: 'lightblue',
-                                                color: 'white',
-                                                padding: 5,
-                                                paddingLeft: 10,
-                                                paddingRight: 10,
-                                                cursor: 'pointer',
-                                                borderRadius: 5
-                                            }}
-                                            onClick={() => {
-                                                setBoostRecipient(o.address);
-                                                setBoostRecipientName(o.name);
-                                            }}
-                                        >
-                                            BOOST ⚡
-                                        </p>
-                                    </div>
-                                );
-                            }
-                        )}
                     {!!subscriptions && (
                         <>
                             <h4

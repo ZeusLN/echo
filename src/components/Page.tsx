@@ -16,6 +16,9 @@ interface Props {
     search?: string;
     setSearch?: any;
     searchForPodcast?: any;
+    sentTotal?: Number;
+    showStats?: boolean;
+    toggleShowStats?: any;
 }
 
 const Page: React.FC<Props> = ({
@@ -28,7 +31,10 @@ const Page: React.FC<Props> = ({
     toggleSupportApollo,
     search,
     setSearch,
-    searchForPodcast
+    searchForPodcast,
+    sentTotal = 0,
+    showStats,
+    toggleShowStats
 }) => {
     const { lnc } = useLNC();
     return (
@@ -55,6 +61,23 @@ const Page: React.FC<Props> = ({
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="ml-auto">
+                            <div style={{ marginRight: 20 }}>
+                                {lnc.isConnected && (
+                                    <Button
+                                        style={{
+                                            background: 'green',
+                                            color: 'white',
+                                            borderWidth: 0,
+                                            fontWeight: 'bold'
+                                        }}
+                                        onClick={() =>
+                                            toggleShowStats(!showStats)
+                                        }
+                                    >
+                                        {sentTotal.toString()}
+                                    </Button>
+                                )}
+                            </div>
                             <div style={{ marginRight: 20 }}>
                                 {lnc.isConnected && (
                                     <Button
