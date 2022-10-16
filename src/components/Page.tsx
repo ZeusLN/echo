@@ -136,7 +136,13 @@ const Page: React.FC<Props> = ({
                     style={{ marginTop: -18 }}
                 >
                     <Container>
-                        <Form style={{ width: 75, marginRight: 10 }}>
+                        <Form
+                            style={{ width: 75, marginRight: 10 }}
+                            onSubmit={(event: any) => {
+                                toggleShowSettings(false);
+                                event.preventDefault();
+                            }}
+                        >
                             <Form.Control
                                 className="me-2"
                                 aria-label="Sats Per Minute"
