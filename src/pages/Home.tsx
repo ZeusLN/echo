@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Page from '../components/Page';
 import useLNC from '../hooks/useLNC';
-import { hexToBase64 } from '../utils/Base64Utils';
+import { hexToBase64, utf8ToHexString } from '../utils/Base64Utils';
 import {
     searchPodcasts,
     podcastByFeedId,
     episodesByFeedId
 } from '../utils/RequestUtils';
+import packageInfo from './../../package.json';
 
 import { cloneDeep } from 'lodash';
 import BigNumber from 'bignumber.js';
@@ -18,20 +19,27 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const randomBytes = require('randombytes');
 
-const SUBSCRIPTION_KEY = 'apollo-subscriptions';
+const LOCALSTORAGE_SUBSCRIPTION_KEY = 'apollo-subscriptions';
+const DEFAULT_BOOST_AMT = 1_000;
+const DEFAULT_SATS_PER_MINUTE = 100;
+const DEFAULT_BOOST_SENDER = 'An anonymous Apollo user';
 
 // pull from local localStorage
 // TODO make util
 
 const Home: React.FC = () => {
     const { lnc } = useLNC();
-    const [info, setInfo] = useState<any>();
-    const [search, setSearch] = useState<any>('Citadel Dispatch');
+    const [info, setInfo] = useState<any>({});
+    const [search, setSearch] = useState<any>('');
     const [searchResults, setSearchResults] = useState<any>([]);
 
     //
-    const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(2);
+    const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(
+        DEFAULT_SATS_PER_MINUTE
+    );
     const [activePodcast, setActivePodcast]: [any, any] = useState(null);
+    const [activeShow, setActiveShow]: [any, any] = useState(null);
+
     const [activePodcastFunding, setActivePodcastFunding]: [any, any] =
         useState(null);
     const [activePodcastFundingUnmodified, setActivePodcastFundingUnmodified]: [
@@ -48,8 +56,10 @@ const Home: React.FC = () => {
     const [selectedShow, setSelectedShow]: [any, any] = useState('');
     const [episodes, setEpisodes]: [any, any] = useState([]);
     const [subscriptions, setSubscriptions]: [any, any] = useState(
-        localStorage.getItem(SUBSCRIPTION_KEY)
-            ? JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY) || '')
+        localStorage.getItem(LOCALSTORAGE_SUBSCRIPTION_KEY)
+            ? JSON.parse(
+                  localStorage.getItem(LOCALSTORAGE_SUBSCRIPTION_KEY) || ''
+              )
             : {}
     );
 
@@ -57,27 +67,65 @@ const Home: React.FC = () => {
     const [showSettings, toggleShowSettings] = useState(false);
     const [supportApollo, toggleSupportApollo] = useState(true);
 
+    // BOOSTS
+    const [boostRecipient, setBoostRecipient] = useState(null);
+    const [boostRecipientName, setBoostRecipientName] = useState('');
+    const [boostAmount, setBoostAmount] = useState(DEFAULT_BOOST_AMT);
+    const [boostMessage, setBoostMessage] = useState('');
+    const [boostSender, setBoostSender] = useState(DEFAULT_BOOST_SENDER);
+
+    const resetBoost = () => {
+        setBoostRecipient(null);
+        setBoostRecipientName('');
+        setBoostAmount(DEFAULT_BOOST_AMT);
+        setBoostMessage('');
+        setBoostSender(DEFAULT_BOOST_SENDER);
+    };
+
     const keysend = async (
         destination: string,
         amount: number,
-        name: string
+        name: string,
+        boostMsg?: string,
+        boostSender?: string
     ) => {
         const preimage = randomBytes(32);
         const secret = preimage.toString('base64');
         const paymentHash = hexToBase64(sha256(preimage));
-        const destCustomRecords = { '5482373484': secret };
+        const destCustomRecords: any = { '5482373484': secret };
+
+        let paymentRequest = {
+            dest: hexToBase64(destination),
+            amt: amount.toString(),
+            destCustomRecords,
+            paymentHash,
+            timeoutSeconds: 30
+        };
+
+        if (boostMsg || boostSender) {
+            const message = JSON.stringify({
+                podcast: activeShow[0],
+                feedID: activeShow[1].id,
+                url: activeShow[1].originalUrl,
+                guid: activeShow[1].podcastGuid,
+                episode: activePodcast.title,
+                app_name: 'Apollo',
+                app_version: packageInfo.version,
+                sender_name: boostSender,
+                message: boostMsg
+            });
+            const hex_message = hexToBase64(utf8ToHexString(message));
+            destCustomRecords!['7629169'] = hex_message;
+        }
 
         const info = new Promise<any>(async (resolve, reject) => {
             await lnc.lnd.router.sendPaymentV2(
-                {
-                    dest: hexToBase64(destination),
-                    amt: amount.toString(),
-                    destCustomRecords,
-                    paymentHash,
-                    timeoutSeconds: 30
-                },
+                paymentRequest,
                 (event: any) => {
-                    if (event.status === 'SUCCEEDED') resolve(event);
+                    if (event.status === 'SUCCEEDED') {
+                        resolve(event);
+                        if (boostMsg || boostSender) resetBoost();
+                    }
                     if (event.status === 'FAILED') reject(event);
                 },
                 (error: Error) => {
@@ -85,7 +133,7 @@ const Home: React.FC = () => {
                 }
             );
         });
-        const msg = `payment of ${amount} ${
+        const msg = `${boostMsg ? 'boost' : 'payment'} of ${amount} ${
             amount > 1 ? 'sats' : 'sat'
         } to ${name}`;
         toast.promise(info, {
@@ -102,11 +150,13 @@ const Home: React.FC = () => {
 
         delete newSubscriptions[showName];
         localStorage.setItem(
-            SUBSCRIPTION_KEY,
+            LOCALSTORAGE_SUBSCRIPTION_KEY,
             JSON.stringify(newSubscriptions)
         );
         setSubscriptions(
-            JSON.parse(localStorage.getItem(SUBSCRIPTION_KEY) || '')
+            JSON.parse(
+                localStorage.getItem(LOCALSTORAGE_SUBSCRIPTION_KEY) || ''
+            )
         );
     };
 
@@ -233,8 +283,6 @@ const Home: React.FC = () => {
         }
     });
 
-    console.log('wow', activePodcast);
-
     return (
         <Page
             satsPerMinute={satsPerMinute}
@@ -270,7 +318,8 @@ const Home: React.FC = () => {
                                             backgroundColor: 'darkgreen',
                                             color: 'white',
                                             marginRight: 10,
-                                            padding: 8
+                                            padding: 8,
+                                            borderRadius: 5
                                         }}
                                         onClick={() =>
                                             podcastByFeedId(o.id).then(
@@ -300,7 +349,7 @@ const Home: React.FC = () => {
                                                                 {}
                                                             );
                                                     localStorage.setItem(
-                                                        SUBSCRIPTION_KEY,
+                                                        LOCALSTORAGE_SUBSCRIPTION_KEY,
                                                         JSON.stringify(
                                                             sortedSubscriptions
                                                         )
@@ -308,7 +357,7 @@ const Home: React.FC = () => {
                                                     setSubscriptions(
                                                         JSON.parse(
                                                             localStorage.getItem(
-                                                                SUBSCRIPTION_KEY
+                                                                LOCALSTORAGE_SUBSCRIPTION_KEY
                                                             ) || ''
                                                         )
                                                     );
@@ -343,6 +392,7 @@ const Home: React.FC = () => {
             )}
             {lnc.isConnected && (
                 <>
+                    {activePodcast && <h4>Now Playing</h4>}
                     {activePodcast && <h2>{activePodcast.title}</h2>}
                     {activePodcast && activePodcast.feedImage && (
                         <img
@@ -392,6 +442,72 @@ const Home: React.FC = () => {
                                 width: '100%'
                             }}
                         />
+                    )}
+
+                    {activePodcast && activePodcastFunding && boostRecipient && (
+                        <>
+                            <h4 style={{ marginTop: 50 }}>
+                                Submit a boost to {boostRecipientName}
+                            </h4>
+                            <form
+                                onSubmit={(event: any) => {
+                                    keysend(
+                                        boostRecipient,
+                                        boostAmount,
+                                        boostRecipientName,
+                                        boostMessage,
+                                        boostSender
+                                    );
+                                    event.preventDefault();
+                                }}
+                                style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    marginBottom: 50
+                                }}
+                            >
+                                <label>
+                                    Amount:
+                                    <input
+                                        type="text"
+                                        name="amount"
+                                        value={boostAmount}
+                                        style={{ marginLeft: 10 }}
+                                        onChange={(event: any) =>
+                                            setBoostAmount(
+                                                Number(event.target.value)
+                                            )
+                                        }
+                                    />
+                                </label>
+                                <label>
+                                    Boostagram Message (optional):
+                                    <input
+                                        type="text"
+                                        name="message"
+                                        value={boostMessage}
+                                        style={{ marginLeft: 10 }}
+                                        onChange={(event: any) =>
+                                            setBoostMessage(event.target.value)
+                                        }
+                                    />
+                                </label>
+                                <label>
+                                    Sender name (optional):
+                                    <input
+                                        type="text"
+                                        name="sender"
+                                        value={boostSender}
+                                        style={{ marginLeft: 10 }}
+                                        onChange={(event: any) =>
+                                            setBoostSender(event.target.value)
+                                        }
+                                        placeholder="An anonymous Apollo user"
+                                    />
+                                </label>
+                                <input type="submit" value="Submit" />
+                            </form>
+                        </>
                     )}
                     {activePodcast &&
                         activePodcastFunding &&
@@ -467,6 +583,25 @@ const Home: React.FC = () => {
                                                     : '0'}
                                             </p>
                                         )}
+                                        <p
+                                            style={{
+                                                display: 'inline-block',
+                                                margin: 5,
+                                                backgroundColor: 'lightblue',
+                                                color: 'white',
+                                                padding: 5,
+                                                paddingLeft: 10,
+                                                paddingRight: 10,
+                                                cursor: 'pointer',
+                                                borderRadius: 5
+                                            }}
+                                            onClick={() => {
+                                                setBoostRecipient(o.address);
+                                                setBoostRecipientName(o.name);
+                                            }}
+                                        >
+                                            BOOST ⚡
+                                        </p>
                                     </div>
                                 );
                             }
@@ -561,8 +696,17 @@ const Home: React.FC = () => {
                                                                 setActivePodcast(
                                                                     episode
                                                                 );
+                                                                setActiveShow(
+                                                                    selectedShow
+                                                                );
                                                                 setSearchResults(
                                                                     []
+                                                                );
+                                                                setBoostRecipient(
+                                                                    null
+                                                                );
+                                                                setBoostRecipientName(
+                                                                    ''
                                                                 );
                                                             }}
                                                             style={{

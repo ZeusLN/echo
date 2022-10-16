@@ -87,6 +87,10 @@ const Page: React.FC<Props> = ({
                                         onChange={(event: any) =>
                                             setSearch(event.target.value)
                                         }
+                                        onSubmit={(event: any) => {
+                                            searchForPodcast(search);
+                                            event.preventDefault();
+                                        }}
                                     />
                                     <Button
                                         variant="outline-success"
