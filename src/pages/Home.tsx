@@ -412,36 +412,7 @@ const Home: React.FC = () => {
                 <>
                     {activePodcast && <h4>Now Playing</h4>}
                     {activePodcast && <h2>{activePodcast.title}</h2>}
-                    {activePodcast && (
-                        <div
-                            style={{
-                                display: 'inline-grid',
-                                gridTemplateColumns: '1fr 1fr',
-                                marginTop: 50,
-                                marginBottom: 50
-                            }}
-                        >
-                            {activePodcast.feedImage && (
-                                <img
-                                    alt={`${activePodcast.title} artwork`}
-                                    src={activePodcast.feedImage}
-                                    width={400}
-                                    style={{ margin: 20, alignItems: 'center' }}
-                                    onError={({ currentTarget }) => {
-                                        currentTarget.onerror = null; // prevents looping
-                                        currentTarget.src = 'placeholder.png';
-                                    }}
-                                />
-                            )}
-                            {activePodcast.description && (
-                                <div
-                                    dangerouslySetInnerHTML={{
-                                        __html: activePodcast.description
-                                    }}
-                                />
-                            )}
-                        </div>
-                    )}
+
                     {activePodcast && (
                         <ReactAudioPlayer
                             src={activePodcast.enclosureUrl}
@@ -469,9 +440,40 @@ const Home: React.FC = () => {
                             // trigger onListen every minute
                             listenInterval={60000}
                             style={{
-                                width: '100%'
+                                width: '100%',
+                                marginTop: 25
                             }}
                         />
+                    )}
+
+                    {activePodcast && (
+                        <div
+                            style={{
+                                display: 'inline-grid',
+                                gridTemplateColumns: '1fr 1fr',
+                                marginTop: 50
+                            }}
+                        >
+                            {activePodcast.feedImage && (
+                                <img
+                                    alt={`${activePodcast.title} artwork`}
+                                    src={activePodcast.feedImage}
+                                    width={'80%'}
+                                    style={{ alignItems: 'center' }}
+                                    onError={({ currentTarget }) => {
+                                        currentTarget.onerror = null; // prevents looping
+                                        currentTarget.src = 'placeholder.png';
+                                    }}
+                                />
+                            )}
+                            {activePodcast.description && (
+                                <div
+                                    dangerouslySetInnerHTML={{
+                                        __html: activePodcast.description
+                                    }}
+                                />
+                            )}
+                        </div>
                     )}
 
                     {activePodcast && activePodcastFunding && boostRecipient && (
