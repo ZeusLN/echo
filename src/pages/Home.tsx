@@ -19,10 +19,10 @@ import 'react-toastify/dist/ReactToastify.css';
 
 const randomBytes = require('randombytes');
 
-const LOCALSTORAGE_SUBSCRIPTION_KEY = 'apollo-subscriptions';
+const LOCALSTORAGE_SUBSCRIPTION_KEY = 'echo-subscriptions';
 const DEFAULT_BOOST_AMT = 1_000;
 const DEFAULT_SATS_PER_MINUTE = 100;
-const DEFAULT_BOOST_SENDER = 'An anonymous Apollo user';
+const DEFAULT_BOOST_SENDER = 'An anonymous Echo user';
 
 const Home: React.FC = () => {
     const { lnc } = useLNC();
@@ -41,7 +41,7 @@ const Home: React.FC = () => {
     const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(
         DEFAULT_SATS_PER_MINUTE
     );
-    const [supportApollo, toggleSupportApollo] = useState(true);
+    const [supportEcho, toggleSupportEcho] = useState(true);
 
     // NOW PLAYING
     const [activePodcast, setActivePodcast]: [any, any] = useState(null);
@@ -112,7 +112,7 @@ const Home: React.FC = () => {
                 url: activeShow[1].originalUrl,
                 guid: activeShow[1].podcastGuid,
                 episode: activePodcast.title,
-                app_name: 'Apollo',
+                app_name: 'Echo',
                 app_version: packageInfo.version,
                 sender_name: boostSender,
                 message: boostMsg
@@ -235,13 +235,13 @@ const Home: React.FC = () => {
 
     const setFunding = (funding: any) => {
         const newFunding = cloneDeep(funding);
-        if (supportApollo && newFunding && newFunding.destinations) {
+        if (supportEcho && newFunding && newFunding.destinations) {
             newFunding.destinations[0].split =
                 newFunding.destinations[0].split - 1;
             newFunding.destinations.push({
                 address:
                     '031b301307574bbe9b9ac7b79cbe1700e31e544513eae0b5d7497483083f99e581',
-                name: 'Zeus + Apollo Developer Fund',
+                name: 'Zeus + Echo Developer Fund',
                 type: 'node',
                 split: 1
             });
@@ -252,7 +252,7 @@ const Home: React.FC = () => {
 
     useEffect(() => {
         setFunding(activePodcastFundingUnmodified);
-    }, [supportApollo]);
+    }, [supportEcho]);
 
     useEffect(() => {
         if (lnc.isConnected) {
@@ -290,8 +290,8 @@ const Home: React.FC = () => {
             showSettings={showSettings}
             toggleShowSettings={toggleShowSettings}
             setSatsPerMinute={setSatsPerMinute}
-            supportApollo={supportApollo}
-            toggleSupportApollo={toggleSupportApollo}
+            supportEcho={supportEcho}
+            toggleSupportEcho={toggleSupportEcho}
             search={search}
             setSearch={setSearch}
             searchForPodcast={searchForPodcast}
@@ -300,7 +300,7 @@ const Home: React.FC = () => {
             toggleShowStats={toggleShowStats}
         >
             {!lnc.isConnected && (
-                <h2 className="text-center">Welcome to Apollo</h2>
+                <h2 className="text-center">Welcome to Echo</h2>
             )}
             <p className="text-center">
                 {lnc.isConnected
@@ -497,7 +497,7 @@ const Home: React.FC = () => {
                                         onChange={(event: any) =>
                                             setBoostSender(event.target.value)
                                         }
-                                        placeholder="An anonymous Apollo user"
+                                        placeholder="An anonymous Echo user"
                                     />
                                 </label>
                                 <input
@@ -818,7 +818,7 @@ const Home: React.FC = () => {
                 <a
                     target="_blank"
                     rel="noreferrer"
-                    href="https://github.com/ZeusLN/apollo"
+                    href="https://github.com/ZeusLN/echo"
                 >
                     GitHub
                 </a>

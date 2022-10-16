@@ -8,11 +8,11 @@ import zeus from '../zeus-logo.svg';
 interface Props {
     children?: React.ReactNode;
     satsPerMinute?: string;
-    supportApollo?: boolean;
+    supportEcho?: boolean;
     showSettings?: boolean;
     toggleShowSettings?: any;
     setSatsPerMinute?: any;
-    toggleSupportApollo?: any;
+    toggleSupportEcho?: any;
     search?: string;
     setSearch?: any;
     searchForPodcast?: any;
@@ -27,8 +27,8 @@ const Page: React.FC<Props> = ({
     showSettings,
     toggleShowSettings,
     setSatsPerMinute,
-    supportApollo,
-    toggleSupportApollo,
+    supportEcho,
+    toggleSupportEcho,
     search,
     setSearch,
     searchForPodcast,
@@ -42,7 +42,7 @@ const Page: React.FC<Props> = ({
             <Navbar bg="dark" variant="dark" expand="lg" className="mb-3">
                 <Container>
                     <Link to="/" className="navbar-brand">
-                        Apollo
+                        Echo
                     </Link>
                     <Navbar.Text>by</Navbar.Text>
                     <a
@@ -187,12 +187,12 @@ const Page: React.FC<Props> = ({
                         <Navbar.Collapse id="basic-navbar-nav">
                             <Nav className="ml-auto">
                                 <Navbar.Text>
-                                    Support Apollo development by sending Zeus
+                                    Support Echo development by sending Zeus
                                     1%
                                 </Navbar.Text>
                                 <Button
                                     style={{
-                                        background: supportApollo
+                                        background: supportEcho
                                             ? 'green'
                                             : 'red',
                                         color: 'white',
@@ -201,10 +201,10 @@ const Page: React.FC<Props> = ({
                                         marginLeft: 10
                                     }}
                                     onClick={() =>
-                                        toggleSupportApollo(!supportApollo)
+                                        toggleSupportEcho(!supportEcho)
                                     }
                                 >
-                                    {supportApollo ? 'Enabled' : 'Disabled'}
+                                    {supportEcho ? 'Enabled' : 'Disabled'}
                                 </Button>
                             </Nav>
                         </Navbar.Collapse>

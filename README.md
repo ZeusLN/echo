@@ -1,4 +1,4 @@
-# Apollo
+# Echo
 
 A Podcasting 2.0 web app that connects to your own node using Lightning Node Connect 
 

@@ -18,7 +18,7 @@ const reqInstance = () => {
             Authorization: hash,
             'X-Auth-Key': podcastIndexAPIKey,
             'X-Auth-Date': unixTime,
-            'User-Agent': `Apollo v${packageInfo.version}`
+            'User-Agent': `Echo v${packageInfo.version}`
         }
     });
 };
