@@ -60,11 +60,11 @@ const Home: React.FC = () => {
     // keep track of sent, and to send - can't keysend millisats
     const [sent, setSent]: [any, any] = useState({});
     const [carry, setCarry]: [any, any] = useState({});
-    const [sentTotal, setSentTotal]: [any, any] = useState(0);
+    const [sentTotal, setSentTotal]: [any, any] = useState(new BigNumber(0));
     const [showStats, toggleShowStats] = useState(false);
 
     const clearStats = () => {
-        setSentTotal(0);
+        setSentTotal(new BigNumber(0));
         setSent({});
         setCarry({});
     };
@@ -425,7 +425,7 @@ const Home: React.FC = () => {
                 </>
             )}
 
-            {showStats && activePodcast && activePodcastFunding && (
+            {showStats && (
                 <div style={{ marginBottom: 50 }}>
                     {boostRecipient && (
                         <>
@@ -527,17 +527,19 @@ const Home: React.FC = () => {
                     >
                         Stats
                     </h4>
-                    <p
-                        style={{
-                            cursor: 'pointer',
-                            display: 'inline-block',
-                            marginLeft: 10
-                        }}
-                        onClick={() => clearStats()}
-                    >
-                        0️⃣
-                    </p>
-                    {activePodcastFunding.destinations && (
+                    {sentTotal.gt(0) && (
+                        <p
+                            style={{
+                                cursor: 'pointer',
+                                display: 'inline-block',
+                                marginLeft: 10
+                            }}
+                            onClick={() => clearStats()}
+                        >
+                            0️⃣
+                        </p>
+                    )}
+                    {activePodcastFunding && activePodcastFunding.destinations && (
                         <p
                             style={{
                                 fontWeight: 'bold',
@@ -549,104 +551,105 @@ const Home: React.FC = () => {
                         </p>
                     )}
 
-                    {activePodcastFunding.destinations.map(
-                        (o: any, index: number) => {
-                            return (
-                                <div key={index}>
-                                    <p
-                                        style={{
-                                            display: 'inline-block',
-                                            margin: 5
-                                        }}
-                                    >
-                                        {o.name} ({o.split}% |{' '}
-                                        {new BigNumber(satsPerMinute)
-                                            .multipliedBy(o.split)
-                                            .dividedBy(100)
-                                            .toString()}{' '}
-                                        s/m)
-                                    </p>
-                                    {sent && sent[o.address] && (
+                    {activePodcastFunding &&
+                        activePodcastFunding.destinations.map(
+                            (o: any, index: number) => {
+                                return (
+                                    <div key={index}>
+                                        <p
+                                            style={{
+                                                display: 'inline-block',
+                                                margin: 5
+                                            }}
+                                        >
+                                            {o.name} ({o.split}% |{' '}
+                                            {new BigNumber(satsPerMinute)
+                                                .multipliedBy(o.split)
+                                                .dividedBy(100)
+                                                .toString()}{' '}
+                                            s/m)
+                                        </p>
+                                        {sent && sent[o.address] && (
+                                            <p
+                                                style={{
+                                                    display: 'inline-block',
+                                                    margin: 5,
+                                                    color:
+                                                        sent[o.address] &&
+                                                        sent[o.address].gte(1)
+                                                            ? 'green'
+                                                            : 'black'
+                                                }}
+                                            >
+                                                Sent:{' '}
+                                                {sent[o.address]
+                                                    ? sent[o.address].toString()
+                                                    : '0'}{' '}
+                                            </p>
+                                        )}
+                                        {carry && carry[o.address] && (
+                                            <p
+                                                style={{
+                                                    display: 'inline-block',
+                                                    margin: 5,
+                                                    color:
+                                                        carry[o.address] &&
+                                                        carry[o.address].gte(1)
+                                                            ? 'red'
+                                                            : 'black'
+                                                }}
+                                            >
+                                                Carry:{' '}
+                                                {carry[o.address]
+                                                    ? carry[
+                                                          o.address
+                                                      ].toString()
+                                                    : '0'}
+                                            </p>
+                                        )}
                                         <p
                                             style={{
                                                 display: 'inline-block',
                                                 margin: 5,
-                                                color:
-                                                    sent[o.address] &&
-                                                    sent[o.address].gte(1)
-                                                        ? 'green'
-                                                        : 'black'
+                                                backgroundColor: 'lightblue',
+                                                color: 'white',
+                                                padding: 5,
+                                                paddingLeft: 10,
+                                                paddingRight: 10,
+                                                cursor: 'pointer',
+                                                borderRadius: 5
+                                            }}
+                                            onClick={() => {
+                                                setBoostRecipient(o.address);
+                                                setBoostRecipientName(o.name);
                                             }}
                                         >
-                                            Sent:{' '}
-                                            {sent[o.address]
-                                                ? sent[o.address].toString()
-                                                : '0'}{' '}
+                                            BOOST ⚡
                                         </p>
-                                    )}
-                                    {carry && carry[o.address] && (
-                                        <p
-                                            style={{
-                                                display: 'inline-block',
-                                                margin: 5,
-                                                color:
-                                                    carry[o.address] &&
-                                                    carry[o.address].gte(1)
-                                                        ? 'red'
-                                                        : 'black'
-                                            }}
-                                        >
-                                            Carry:{' '}
-                                            {carry[o.address]
-                                                ? carry[o.address].toString()
-                                                : '0'}
-                                        </p>
-                                    )}
-                                    <p
-                                        style={{
-                                            display: 'inline-block',
-                                            margin: 5,
-                                            backgroundColor: 'lightblue',
-                                            color: 'white',
-                                            padding: 5,
-                                            paddingLeft: 10,
-                                            paddingRight: 10,
-                                            cursor: 'pointer',
-                                            borderRadius: 5
-                                        }}
-                                        onClick={() => {
-                                            setBoostRecipient(o.address);
-                                            setBoostRecipientName(o.name);
-                                        }}
-                                    >
-                                        BOOST ⚡
-                                    </p>
-                                </div>
-                            );
-                        }
-                    )}
-                    {activePodcastFunding.destinations && (
-                        <div style={{ marginTop: 20 }}>
-                            <p
-                                style={{
-                                    display: 'inline-block',
-                                    fontWeight: 'bold',
-                                    marginRight: 5
-                                }}
-                            >
-                                Total sent:
-                            </p>
-                            <p
-                                style={{
-                                    display: 'inline-block',
-                                    fontWeight: 'bold',
-                                    color: sentTotal !== 0 ? 'green' : 'black'
-                                }}
-                            >
-                                {`${sentTotal}`}
-                            </p>
-                        </div>
-                    )}
+                                    </div>
+                                );
+                            }
+                        )}
+                    <div style={{ marginTop: 20 }}>
+                        <p
+                            style={{
+                                display: 'inline-block',
+                                fontWeight: 'bold',
+                                marginRight: 5
+                            }}
+                        >
+                            Total sent:
+                        </p>
+                        <p
+                            style={{
+                                display: 'inline-block',
+                                fontWeight: 'bold',
+                                color: sentTotal.gt(0) ? 'green' : 'black'
+                            }}
+                        >
+                            {`${sentTotal}`}
+                        </p>
+                    </div>
                 </div>
             )}
 
