@@ -20,6 +20,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const randomBytes = require('randombytes');
 
 const LOCALSTORAGE_SUBSCRIPTION_KEY = 'echo-subscriptions';
+const LOCALSTORAGE_SPM_KEY = 'echo-sats-per-minute';
 const DEFAULT_BOOST_AMT = 1_000;
 const DEFAULT_SATS_PER_MINUTE = 100;
 const DEFAULT_BOOST_SENDER = 'An anonymous Echo user';
@@ -39,7 +40,9 @@ const Home: React.FC = () => {
     // SETTINGS
     const [showSettings, toggleShowSettings] = useState(false);
     const [satsPerMinute, setSatsPerMinute]: [any, any] = useState(
-        DEFAULT_SATS_PER_MINUTE
+        localStorage.getItem(LOCALSTORAGE_SPM_KEY)
+            ? Number(localStorage.getItem(LOCALSTORAGE_SPM_KEY))
+            : DEFAULT_SATS_PER_MINUTE
     );
     const [supportEcho, toggleSupportEcho] = useState(true);
 
@@ -264,6 +267,11 @@ const Home: React.FC = () => {
         setActivePodcastFunding(newFunding);
     };
 
+    const setSPM = (newValue: Number) => {
+        localStorage.setItem(LOCALSTORAGE_SPM_KEY, newValue.toString());
+        setSatsPerMinute(newValue);
+    };
+
     useEffect(() => {
         setFunding(activePodcastFundingUnmodified);
     }, [supportEcho]);
@@ -293,7 +301,7 @@ const Home: React.FC = () => {
             satsPerMinute={satsPerMinute}
             showSettings={showSettings}
             toggleShowSettings={toggleShowSettings}
-            setSatsPerMinute={setSatsPerMinute}
+            setSatsPerMinute={setSPM}
             supportEcho={supportEcho}
             toggleSupportEcho={toggleSupportEcho}
             search={search}
