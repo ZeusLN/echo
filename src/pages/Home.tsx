@@ -424,6 +424,7 @@ const Home: React.FC = () => {
                                                             ) || ''
                                                         )
                                                     );
+                                                    setSearch('');
                                                     setSearchResults([]);
                                                 }
                                             )
