@@ -220,12 +220,16 @@ const Home: React.FC = () => {
             ? failure
                 ? sent[o.address].plus(0)
                 : sent[o.address].plus(amountToSend)
+            : failure
+            ? new BigNumber(0)
             : amountToSend;
 
         newCarry[o.address] = carry[o.address]
             ? failure
                 ? carry[o.address].plus(amountOwed)
                 : amountToCarry
+            : failure
+            ? amountOwed
             : amountToCarry;
 
         console.log(`newSent for ${o.name}: ${newSent[o.address]}`);
