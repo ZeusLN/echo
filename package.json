@@ -6,7 +6,7 @@
     "@babel/core": "7.16.0",
     "@lightninglabs/lnc-web": "0.1.12-alpha",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.3",
-    "@svgr/webpack": "5.5.0",
+    "@svgr/webpack": "6.5.0",
     "@testing-library/jest-dom": "5.16.4",
     "@testing-library/react": "13.3.0",
     "@testing-library/user-event": "13.5.0",
@@ -76,7 +76,7 @@
     "web-vitals": "2.1.4",
     "webpack": "5.64.4",
     "webpack-manifest-plugin": "4.0.2",
-    "workbox-webpack-plugin": "6.4.1"
+    "workbox-webpack-plugin": "6.5.4"
   },
   "scripts": {
     "start": "node scripts/start.js",
