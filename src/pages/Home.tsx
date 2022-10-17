@@ -60,6 +60,12 @@ const Home: React.FC = () => {
     const [sentTotal, setSentTotal]: [any, any] = useState(0);
     const [showStats, toggleShowStats] = useState(false);
 
+    const clearStats = () => {
+        setSentTotal(0);
+        setSent({});
+        setCarry({});
+    };
+
     // SUBSCRIPTIONS
     const [subscriptions, setSubscriptions]: [any, any] = useState(
         localStorage.getItem(LOCALSTORAGE_SUBSCRIPTION_KEY)
@@ -225,6 +231,14 @@ const Home: React.FC = () => {
         setSent(newSent);
         setCarry(newCarry);
 
+        if (!!sent) {
+            let total = new BigNumber(0);
+            Object.keys(sent).map((o: any) => {
+                total = total.plus(sent[o]);
+                setSentTotal(total);
+            });
+        }
+
         return;
     };
 
@@ -273,16 +287,6 @@ const Home: React.FC = () => {
             setEpisodes([]);
         }
     }, [selectedShow]);
-
-    useEffect(() => {
-        if (!!sent) {
-            let total = new BigNumber(0);
-            Object.keys(sent).map((o: any) => {
-                total = total.plus(sent[o]);
-                setSentTotal(total);
-            });
-        }
-    });
 
     return (
         <Page
@@ -508,7 +512,23 @@ const Home: React.FC = () => {
                             </form>
                         </>
                     )}
-                    <h4>Stats</h4>
+                    <h4
+                        style={{
+                            display: 'inline-block'
+                        }}
+                    >
+                        Stats
+                    </h4>
+                    <p
+                        style={{
+                            cursor: 'pointer',
+                            display: 'inline-block',
+                            marginLeft: 10
+                        }}
+                        onClick={() => clearStats()}
+                    >
+                        0️⃣
+                    </p>
                     {activePodcastFunding.destinations && (
                         <p
                             style={{
@@ -648,8 +668,6 @@ const Home: React.FC = () => {
                                         }
                                     );
                                 }
-
-                                return;
                             }}
                             // trigger onListen every minute
                             listenInterval={60_000}

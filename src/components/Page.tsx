@@ -32,7 +32,7 @@ const Page: React.FC<Props> = ({
     search,
     setSearch,
     searchForPodcast,
-    sentTotal = 0,
+    sentTotal,
     showStats,
     toggleShowStats
 }) => {
@@ -65,23 +65,6 @@ const Page: React.FC<Props> = ({
                                 {lnc.isConnected && (
                                     <Button
                                         style={{
-                                            background: 'green',
-                                            color: 'white',
-                                            borderWidth: 0,
-                                            fontWeight: 'bold'
-                                        }}
-                                        onClick={() =>
-                                            toggleShowStats(!showStats)
-                                        }
-                                    >
-                                        {sentTotal.toString()}
-                                    </Button>
-                                )}
-                            </div>
-                            <div style={{ marginRight: 20 }}>
-                                {lnc.isConnected && (
-                                    <Button
-                                        style={{
                                             background: showSettings
                                                 ? 'black'
                                                 : 'orange',
@@ -93,9 +76,24 @@ const Page: React.FC<Props> = ({
                                             toggleShowSettings(!showSettings)
                                         }
                                     >
-                                        {showSettings
-                                            ? 'Close settings'
-                                            : satsPerMinute}
+                                        {showSettings ? 'X' : satsPerMinute}
+                                    </Button>
+                                )}
+                            </div>
+                            <div style={{ marginRight: 20 }}>
+                                {lnc.isConnected && (
+                                    <Button
+                                        style={{
+                                            background: 'green',
+                                            color: 'white',
+                                            borderWidth: 0,
+                                            fontWeight: 'bold'
+                                        }}
+                                        onClick={() =>
+                                            toggleShowStats(!showStats)
+                                        }
+                                    >
+                                        {`${sentTotal || 0}`}
                                     </Button>
                                 )}
                             </div>
