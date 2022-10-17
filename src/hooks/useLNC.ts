@@ -4,6 +4,7 @@ import LNC from '@lightninglabs/lnc-web';
 // create a singleton instance of LNC that will live for the lifetime of the app
 const lnc = new LNC({
     wasmClientCode: 'wasm-client.wasm'
+    // wasmClientCode: 'https://storage.googleapis.com/lnc-apollo/wasm-client.wasm'
 });
 
 /**

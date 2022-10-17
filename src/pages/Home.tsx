@@ -31,6 +31,7 @@ const Home: React.FC = () => {
 
     // SEARCH
     const [search, setSearch] = useState<any>('');
+    const [searchField, setSearchField] = useState<any>('');
     const [searchResults, setSearchResults] = useState<any>([]);
 
     // NAVIGATION
@@ -254,6 +255,11 @@ const Home: React.FC = () => {
             setSearchResults(data)
         );
 
+    const setPodcastSearch = (searchString: string) => {
+        setSearch(searchString);
+        searchForPodcast(searchString);
+    };
+
     const setFunding = (funding: any) => {
         const newFunding = cloneDeep(funding);
         if (supportEcho && newFunding && newFunding.destinations) {
@@ -308,9 +314,9 @@ const Home: React.FC = () => {
             setSatsPerMinute={setSPM}
             supportEcho={supportEcho}
             toggleSupportEcho={toggleSupportEcho}
-            search={search}
-            setSearch={setSearch}
-            searchForPodcast={searchForPodcast}
+            searchField={searchField}
+            setSearchField={setSearchField}
+            setPodcastSearch={setPodcastSearch}
             sentTotal={sentTotal}
             showStats={showStats}
             toggleShowStats={toggleShowStats}
@@ -342,9 +348,29 @@ const Home: React.FC = () => {
                 </p>
             )}
 
-            {lnc.isConnected && (
+            {lnc.isConnected && !!search && (
                 <>
-                    {searchResults &&
+                    <h4
+                        style={{
+                            display: 'inline-block'
+                        }}
+                    >
+                        Search results
+                    </h4>
+                    <p
+                        style={{
+                            cursor: 'pointer',
+                            display: 'inline-block',
+                            marginLeft: 10
+                        }}
+                        onClick={() => {
+                            setSearchResults([]);
+                            setSearch('');
+                        }}
+                    >
+                        ❌
+                    </p>
+                    {searchResults.length > 0 &&
                         searchResults.map((o: any, index: number) => {
                             return (
                                 <div key={index}>
@@ -426,6 +452,10 @@ const Home: React.FC = () => {
                                 </div>
                             );
                         })}
+
+                    {searchResults.length === 0 && (
+                        <p>Sorry, no results found.</p>
+                    )}
                 </>
             )}
 

@@ -13,9 +13,9 @@ interface Props {
     toggleShowSettings?: any;
     setSatsPerMinute?: any;
     toggleSupportEcho?: any;
-    search?: string;
-    setSearch?: any;
-    searchForPodcast?: any;
+    searchField?: string;
+    setSearchField?: any;
+    setPodcastSearch?: any;
     sentTotal?: Number;
     showStats?: boolean;
     toggleShowStats?: any;
@@ -29,9 +29,9 @@ const Page: React.FC<Props> = ({
     setSatsPerMinute,
     supportEcho,
     toggleSupportEcho,
-    search,
-    setSearch,
-    searchForPodcast,
+    searchField,
+    setSearchField,
+    setPodcastSearch,
     sentTotal,
     showStats,
     toggleShowStats
@@ -101,7 +101,7 @@ const Page: React.FC<Props> = ({
                                 <Form
                                     className="d-flex"
                                     onSubmit={(event: any) => {
-                                        searchForPodcast(search);
+                                        setPodcastSearch(searchField);
                                         event.preventDefault();
                                     }}
                                 >
@@ -110,15 +110,17 @@ const Page: React.FC<Props> = ({
                                         placeholder="Search for a podcast"
                                         className="me-2"
                                         aria-label="Search"
-                                        value={search}
+                                        value={searchField}
                                         onChange={(event: any) =>
-                                            setSearch(event.target.value)
+                                            setSearchField(event.target.value)
                                         }
                                     />
                                     <Button
                                         variant="outline-success"
                                         style={{ marginRight: 15 }}
-                                        onClick={() => searchForPodcast(search)}
+                                        onClick={() =>
+                                            setPodcastSearch(searchField)
+                                        }
                                     >
                                         Search
                                     </Button>
