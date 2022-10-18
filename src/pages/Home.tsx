@@ -158,6 +158,49 @@ const Home: React.FC = () => {
         return info;
     };
 
+    const sendBoost = async (
+        destination: string,
+        amount: number,
+        name: string,
+        boostMsg?: string,
+        boostSender?: string
+    ) => {
+        const newSent: any = sent;
+
+        try {
+            const result = await keysend(
+                destination,
+                amount,
+                name,
+                boostMsg,
+                boostSender
+            );
+            if (result.status === 'SUCCEEDED') {
+                const msg = `SUCCESS: Boost of ${amount} sats to ${name}`;
+                console.warn(msg);
+
+                newSent[destination] = sent[destination]
+                    ? sent[destination].plus(amount)
+                    : new BigNumber(amount);
+
+                console.log(`newSent for ${name}: ${newSent[destination]}`);
+
+                setSent(newSent);
+
+                const total = sentTotal.plus(amount);
+                setSentTotal(total);
+            } else {
+                const msg = `FAILURE: Boost of ${amount} sats to ${name}`;
+                console.warn(msg);
+            }
+        } catch {
+            const msg = `FAILURE: Boost of ${amount} sats to ${name}`;
+            console.warn(msg);
+        }
+
+        return;
+    };
+
     const deleteShow = (showName: string) => {
         const newSubscriptions = subscriptions;
 
@@ -233,12 +276,9 @@ const Home: React.FC = () => {
         setSent(newSent);
         setCarry(newCarry);
 
-        if (!!sent) {
-            let total = new BigNumber(0);
-            Object.keys(sent).map((o: any) => {
-                total = total.plus(sent[o]);
-                setSentTotal(total);
-            });
+        if (!failure) {
+            const total = sentTotal.plus(amountToSend);
+            setSentTotal(total);
         }
 
         return;
@@ -478,7 +518,7 @@ const Home: React.FC = () => {
                             </p>
                             <form
                                 onSubmit={(event: any) => {
-                                    keysend(
+                                    sendBoost(
                                         boostRecipient,
                                         boostAmount,
                                         boostRecipientName,
