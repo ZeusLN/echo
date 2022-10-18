@@ -177,7 +177,7 @@ const Home: React.FC = () => {
             );
             if (result.status === 'SUCCEEDED') {
                 const msg = `SUCCESS: Boost of ${amount} sats to ${name}`;
-                console.warn(msg);
+                console.warn(msg, result);
 
                 newSent[destination] = sent[destination]
                     ? sent[destination].plus(amount)
@@ -191,7 +191,7 @@ const Home: React.FC = () => {
                 setSentTotal(total);
             } else {
                 const msg = `FAILURE: Boost of ${amount} sats to ${name}`;
-                console.warn(msg);
+                console.warn(msg, result);
             }
         } catch {
             const msg = `FAILURE: Boost of ${amount} sats to ${name}`;
@@ -247,10 +247,10 @@ const Home: React.FC = () => {
                 );
                 if (result.status === 'SUCCEEDED') {
                     const msg = `SUCCESS: Payment of ${amountToSend} sats to ${o.name}`;
-                    console.warn(msg);
+                    console.warn(msg, result);
                 } else {
                     const msg = `FAILURE: Payment of ${amountToSend} sats to ${o.name}`;
-                    console.warn(msg);
+                    console.warn(msg, result);
                     failure = true;
                 }
             } catch {
