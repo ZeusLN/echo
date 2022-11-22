@@ -874,11 +874,26 @@ const Home: React.FC = () => {
                                                         <p
                                                             key={index}
                                                             onClick={() => {
-                                                                setFunding(
-                                                                    subscriptions[
-                                                                        showName
-                                                                    ].value
-                                                                );
+                                                                // opt to use value recipients from episode if specified
+                                                                if (
+                                                                    episode.value &&
+                                                                    episode
+                                                                        .value
+                                                                        .destinations
+                                                                        .length >
+                                                                        0
+                                                                ) {
+                                                                    setFunding(
+                                                                        episode.value
+                                                                    );
+                                                                } else {
+                                                                    setFunding(
+                                                                        subscriptions[
+                                                                            showName
+                                                                        ].value
+                                                                    );
+                                                                }
+
                                                                 setActivePodcast(
                                                                     episode
                                                                 );
