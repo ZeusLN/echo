@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@babel/core": "7.16.0",
-    "@lightninglabs/lnc-web": "0.1.12-alpha",
+    "@lightninglabs/lnc-web": "0.2.0-alpha",
     "@pmmmwh/react-refresh-webpack-plugin": "0.5.3",
     "@svgr/webpack": "6.5.0",
     "@testing-library/jest-dom": "5.16.4",
