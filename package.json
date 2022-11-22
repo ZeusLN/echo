@@ -1,6 +1,6 @@
 {
   "name": "echo",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "private": true,
   "dependencies": {
     "@babel/core": "7.16.0",
